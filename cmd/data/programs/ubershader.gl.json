@@ -1,0 +1,4 @@
+{
+    "vertex": "ubershader.vs.glsl",
+    "fragment": "ubershader.fs.glsl"
+}

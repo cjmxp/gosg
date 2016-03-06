@@ -1,0 +1,4 @@
+{
+    "vertex": "zpass.vs.glsl",
+    "fragment": "zpass.fs.glsl"
+}
