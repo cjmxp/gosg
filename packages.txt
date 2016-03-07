@@ -1,1 +1,0 @@
-build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev

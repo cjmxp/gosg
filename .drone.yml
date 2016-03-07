@@ -1,7 +1,10 @@
 build:
   image: ubuntu:wily
   commands:
+    - apt-get update
+    - apt-get install -y git build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev golang-go
     - go get -t ./...
+    - go get -u github.com/golang/lint/golint
     - golint ./...
     - test -z "$(golint ./...)"
     - go install -v ./...
