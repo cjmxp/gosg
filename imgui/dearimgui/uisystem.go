@@ -12,9 +12,10 @@ import (
 )
 
 func init() {
-	core.SetIMGUISystem(New())
+	core.SetIMGUISystem(&IMGUISystem{})
 }
 
+// IMGUISystem provides an implementation of the core.IMGUISystem interface by wrapping the C++ library DearIMGUI.
 type IMGUISystem struct {
 	texture core.Texture
 }
@@ -29,10 +30,6 @@ var (
 	displaySize mgl32.Vec2
 )
 
-func New() *IMGUISystem {
-	return &IMGUISystem{}
-}
-
 func (i *IMGUISystem) getTextureData() textureData {
 	var width, height C.int
 	payload := unsafe.Pointer(C.get_texture_data(&width, &height))
@@ -41,6 +38,7 @@ func (i *IMGUISystem) getTextureData() textureData {
 	return textureData{int(width), int(height), C.GoBytes(payload, C.int(bufSize))}
 }
 
+// Start implements the core.IMGUISystem interface
 func (i *IMGUISystem) Start() {
 	tdata := i.getTextureData()
 	i.texture = core.GetRenderSystem().NewRawTexture(tdata.width, tdata.height, tdata.payload)
@@ -50,27 +48,33 @@ func (i *IMGUISystem) Start() {
 	C.set_texture_id(i.texture.Handle())
 }
 
+// Stop implements the core.IMGUISystem interface
 func (i *IMGUISystem) Stop() {
 
 }
 
+// Begin implements the core.IMGUISystem interface
 func (i *IMGUISystem) Begin(name string, flags core.WindowFlags) bool {
 	return int(C.begin(C.CString(name), C.int(flags))) == 1
 }
 
+// End implements the core.IMGUISystem interface
 func (i *IMGUISystem) End() {
 	C.end()
 }
 
+// CollapsingHeader implements the core.IMGUISystem interface
 func (i *IMGUISystem) CollapsingHeader(name string) bool {
 	return int(C.collapsing_header(C.CString(name))) == 1
 }
 
+// PlotHistogram implements the core.IMGUISystem interface
 func (i *IMGUISystem) PlotHistogram(name string, values []float32, minScale, maxScale float32, size mgl32.Vec2) {
 	C.plot_histogram(C.CString(name), (*C.float)(unsafe.Pointer(&values[0])), C.int(len(values)), C.float(minScale), C.float(maxScale), (*C.float)(unsafe.Pointer(&size[0])))
 
 }
 
+// Image implements the core.IMGUISystem interface
 func (i IMGUISystem) Image(texture core.Texture, size mgl32.Vec2) {
 	if texture == nil {
 		glog.Fatal("Cannot draw nil texture")
@@ -78,14 +82,17 @@ func (i IMGUISystem) Image(texture core.Texture, size mgl32.Vec2) {
 	C.image(texture.Handle(), (*C.float)(unsafe.Pointer(&size[0])))
 }
 
+// SetNextWindowPos implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetNextWindowPos(pos mgl32.Vec2) {
 	C.set_next_window_pos(C.float(pos[0]), C.float(pos[1]))
 }
 
+// SetNextWindowSize implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetNextWindowSize(size mgl32.Vec2) {
 	C.set_next_window_size(C.float(size[0]), C.float(size[1]))
 }
 
+// StartFrame implements the core.IMGUISystem interface
 func (i *IMGUISystem) StartFrame(dt float64) {
 	state := core.GetInputManager().State()
 	size := core.GetWindowSystem().WindowSize()
@@ -101,20 +108,23 @@ func (i *IMGUISystem) StartFrame(dt float64) {
 	C.frame_new()
 }
 
-// DisplaySize returns the currently set display size
+// DisplaySize implements the core.IMGUISystem interface
 func (i *IMGUISystem) DisplaySize() mgl32.Vec2 {
 	return displaySize
 }
 
+// SetDisplaySize implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetDisplaySize(s mgl32.Vec2) {
 	displaySize = s
 	C.set_display_size(C.float(s[0]), C.float(s[1]))
 }
 
+// SetMousePosition implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetMousePosition(x, y float64) {
 	C.set_mouse_position(C.double(x), C.double(y))
 }
 
+// SetMouseButtons implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetMouseButtons(b0, b1, b2 bool) {
 	var ib0, ib1, ib2 int
 
@@ -133,10 +143,12 @@ func (i *IMGUISystem) SetMouseButtons(b0, b1, b2 bool) {
 	C.set_mouse_buttons(C.int(ib0), C.int(ib1), C.int(ib2))
 }
 
+// SetMouseScrollPosition implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetMouseScrollPosition(xoffset, yoffset float64) {
 	C.set_mouse_scroll_position(C.double(xoffset), C.double(yoffset))
 }
 
+// EndFrame implements the core.IMGUISystem interface
 func (i *IMGUISystem) EndFrame() {
 	C.render()
 
@@ -145,36 +157,42 @@ func (i *IMGUISystem) EndFrame() {
 	state.SetKeysValid(false)
 }
 
+// WantsCaptureMouse implements the core.IMGUISystem interface
 func (i *IMGUISystem) WantsCaptureMouse() bool {
 	return int(C.wants_capture_mouse()) == 1
 }
 
+// WantsCaptureKeyboard implements the core.IMGUISystem interface
 func (i *IMGUISystem) WantsCaptureKeyboard() bool {
 	return int(C.wants_capture_keyboard()) == 1
 }
 
+// DrawData implements the core.DrawData interface
 type DrawData struct {
 	drawData unsafe.Pointer
 }
 
+// GetDrawData implements the core.IMGUISystem interface
 func (i *IMGUISystem) GetDrawData() core.IMGUIDrawData {
 	return &DrawData{C.get_draw_data()}
 }
 
+// CommandListCount implements the core.IMGUISystem interface
 func (d *DrawData) CommandListCount() int {
 	return int(C.get_cmdlist_count(d.drawData))
 }
 
+// GetCommandList implements the core.IMGUISystem interface
 func (d *DrawData) GetCommandList(index int) *core.IMGUICommandList {
-	c_cmdList := C.get_cmdlist(d.drawData, C.int(index))
+	cCmdList := C.get_cmdlist(d.drawData, C.int(index))
 
 	cmdList := &core.IMGUICommandList{
-		CmdBufferSize:    int(c_cmdList.commandBufferSize),
-		VertexBufferSize: int(c_cmdList.vertexBufferSize),
-		IndexBufferSize:  int(c_cmdList.indexBufferSize),
-		VertexPointer:    unsafe.Pointer(c_cmdList.vertexPointer),
-		IndexPointer:     unsafe.Pointer(c_cmdList.indexPointer),
-		Commands:         make([]core.IMGUICommand, int(c_cmdList.commandBufferSize)),
+		CmdBufferSize:    int(cCmdList.commandBufferSize),
+		VertexBufferSize: int(cCmdList.vertexBufferSize),
+		IndexBufferSize:  int(cCmdList.indexBufferSize),
+		VertexPointer:    unsafe.Pointer(cCmdList.vertexPointer),
+		IndexPointer:     unsafe.Pointer(cCmdList.indexPointer),
+		Commands:         make([]core.IMGUICommand, int(cCmdList.commandBufferSize)),
 	}
 
 	for c := 0; c < cmdList.CmdBufferSize; c++ {

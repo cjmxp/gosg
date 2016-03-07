@@ -11,11 +11,11 @@ import (
 )
 
 func init() {
-	core.SetPhysicsSystem(New())
+	core.SetPhysicsSystem(&PhysicsSystem{})
 }
 
 // convenience
-func vec3_to_bullet(vec mgl64.Vec3) (out C.plVector3) {
+func vec3ToBullet(vec mgl64.Vec3) (out C.plVector3) {
 	out[0] = C.plReal(vec.X())
 	out[1] = C.plReal(vec.Y())
 	out[2] = C.plReal(vec.Z())
@@ -23,7 +23,7 @@ func vec3_to_bullet(vec mgl64.Vec3) (out C.plVector3) {
 	return out
 }
 
-func quat_to_bullet(quat mgl64.Quat) (out C.plQuaternion) {
+func quatToBullet(quat mgl64.Quat) (out C.plQuaternion) {
 	out[0] = C.plReal(quat.X())
 	out[1] = C.plReal(quat.Y())
 	out[2] = C.plReal(quat.Z())
@@ -32,29 +32,27 @@ func quat_to_bullet(quat mgl64.Quat) (out C.plQuaternion) {
 	return out
 }
 
-func mat4_to_bullet(mat mgl64.Mat4) (out [16]C.plReal) {
+func mat4ToBullet(mat mgl64.Mat4) (out [16]C.plReal) {
 	for x := 0; x < 16; x++ {
 		out[x] = C.plReal(mat[x])
 	}
 	return out
 }
 
-func mat4_from_bullet(mat [16]C.plReal) (out mgl64.Mat4) {
+func mat4FromBullet(mat [16]C.plReal) (out mgl64.Mat4) {
 	for x := 0; x < 16; x++ {
 		out[x] = float64(mat[x])
 	}
 	return out
 }
 
+// PhysicsSystem implements the core.PhysicsSystem interface by wrapping the Bullet physics library.
 type PhysicsSystem struct {
 	sdk   C.plPhysicsSdkHandle
 	world C.plDynamicsWorldHandle
 }
 
-func New() *PhysicsSystem {
-	return &PhysicsSystem{}
-}
-
+// Start implements the core.PhysicsSystem interface
 func (p *PhysicsSystem) Start() {
 	glog.Info("Starting")
 
@@ -66,82 +64,98 @@ func (p *PhysicsSystem) Start() {
 	C.plSetGravity(p.world, 0.0, 0.0, 0.0)
 }
 
-func (this *PhysicsSystem) Stop() {
+// Stop implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) Stop() {
 	glog.Info("Stopping")
 
-	C.plDeleteDynamicsWorld(this.world)
-	C.plDeletePhysicsSdk(this.sdk)
+	C.plDeleteDynamicsWorld(p.world)
+	C.plDeletePhysicsSdk(p.sdk)
 }
 
-func (this *PhysicsSystem) SetGravity(g mgl64.Vec3) {
-	vec := vec3_to_bullet(g)
-	C.plSetGravity(this.world, vec[0], vec[1], vec[2])
+// SetGravity implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) SetGravity(g mgl64.Vec3) {
+	vec := vec3ToBullet(g)
+	C.plSetGravity(p.world, vec[0], vec[1], vec[2])
 }
 
+// Update implements the core.PhysicsSystem interface
 // fixme: remove gosg dependencies by passing a RigidBodyVec instead of NodeVec
-func (this *PhysicsSystem) Update(dt float64, nodes []*core.Node) {
+func (p *PhysicsSystem) Update(dt float64, nodes []*core.Node) {
 	for _, n := range nodes {
 		n.RigidBody().SetTransform(n.WorldTransform())
 	}
-	C.plStepSimulation(this.world, C.plReal(dt))
+	C.plStepSimulation(p.world, C.plReal(dt))
 	for _, n := range nodes {
 		n.SetWorldTransform(n.RigidBody().GetTransform())
 	}
 }
 
-func (this *PhysicsSystem) AddRigidBody(rigidBody core.RigidBody) {
-	C.plAddRigidBody(this.world, rigidBody.(RigidBody).handle)
+// AddRigidBody implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) AddRigidBody(rigidBody core.RigidBody) {
+	C.plAddRigidBody(p.world, rigidBody.(RigidBody).handle)
 }
 
-func (this *PhysicsSystem) RemoveRigidBody(rigidBody core.RigidBody) {
-	C.plRemoveRigidBody(this.world, rigidBody.(RigidBody).handle)
+// RemoveRigidBody implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) RemoveRigidBody(rigidBody core.RigidBody) {
+	C.plRemoveRigidBody(p.world, rigidBody.(RigidBody).handle)
 }
 
-func (this *PhysicsSystem) CreateRigidBody(mass float32, shape core.CollisionShape) core.RigidBody {
+// CreateRigidBody implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) CreateRigidBody(mass float32, shape core.CollisionShape) core.RigidBody {
 	body := C.plCreateRigidBody(nil, C.float(mass), shape.(CollisionShape).handle)
 	r := RigidBody{body}
 	return r
 }
 
-func (this *PhysicsSystem) DeleteRigidBody(body core.RigidBody) {
+// DeleteRigidBody implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) DeleteRigidBody(body core.RigidBody) {
 	C.plDeleteRigidBody(body.(RigidBody).handle)
 }
 
-func (this *PhysicsSystem) NewStaticPlaneShape(normal mgl64.Vec3, constant float64) core.CollisionShape {
-	vec := vec3_to_bullet(normal)
+// NewStaticPlaneShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewStaticPlaneShape(normal mgl64.Vec3, constant float64) core.CollisionShape {
+	vec := vec3ToBullet(normal)
 	return CollisionShape{C.plNewStaticPlaneShape(&vec[0], C.float(constant))}
 }
 
-func (this *PhysicsSystem) NewSphereShape(radius float64) core.CollisionShape {
+// NewSphereShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewSphereShape(radius float64) core.CollisionShape {
 	return CollisionShape{C.plNewSphereShape(C.plReal(radius))}
 }
 
-func (this *PhysicsSystem) NewBoxShape(box mgl64.Vec3) core.CollisionShape {
-	vec := vec3_to_bullet(box)
+// NewBoxShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewBoxShape(box mgl64.Vec3) core.CollisionShape {
+	vec := vec3ToBullet(box)
 	return CollisionShape{C.plNewBoxShape(vec[0], vec[1], vec[2])}
 }
 
-func (this *PhysicsSystem) NewCapsuleShape(radius float64, height float64) core.CollisionShape {
+// NewCapsuleShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewCapsuleShape(radius float64, height float64) core.CollisionShape {
 	return CollisionShape{C.plNewCapsuleShape(C.plReal(radius), C.plReal(height))}
 }
 
-func (this *PhysicsSystem) NewConeShape(radius float64, height float64) core.CollisionShape {
+// NewConeShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewConeShape(radius float64, height float64) core.CollisionShape {
 	return CollisionShape{C.plNewConeShape(C.plReal(radius), C.plReal(height))}
 }
 
-func (this *PhysicsSystem) NewCylinderShape(radius float64, height float64) core.CollisionShape {
+// NewCylinderShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewCylinderShape(radius float64, height float64) core.CollisionShape {
 	return CollisionShape{C.plNewCylinderShape(C.plReal(radius), C.plReal(height))}
 }
 
-func (this *PhysicsSystem) NewCompoundShape() core.CollisionShape {
+// NewCompoundShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewCompoundShape() core.CollisionShape {
 	return CollisionShape{C.plNewCompoundShape()}
 }
 
-func (this *PhysicsSystem) NewConvexHullShape() core.CollisionShape {
+// NewConvexHullShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewConvexHullShape() core.CollisionShape {
 	return CollisionShape{C.plNewConvexHullShape()}
 }
 
-func (this *PhysicsSystem) NewStaticTriangleMeshShape(mesh core.Mesh) core.CollisionShape {
+// NewStaticTriangleMeshShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) NewStaticTriangleMeshShape(mesh core.Mesh) core.CollisionShape {
 	/*
 		bulletMeshInterface := C.plNewMeshInterface()
 
@@ -163,41 +177,49 @@ func (this *PhysicsSystem) NewStaticTriangleMeshShape(mesh core.Mesh) core.Colli
 	return nil
 }
 
-func (this *PhysicsSystem) DeleteShape(shape core.CollisionShape) {
+// DeleteShape implements the core.PhysicsSystem interface
+func (p *PhysicsSystem) DeleteShape(shape core.CollisionShape) {
 	C.plDeleteShape(shape.(CollisionShape).handle)
 }
 
+// RigidBody implements the core.RigidBody interface
 type RigidBody struct {
 	handle C.plRigidBodyHandle
 }
 
-func (this RigidBody) GetTransform() mgl64.Mat4 {
-	mat := mat4_to_bullet(mgl64.Ident4())
-	C.plGetOpenGLMatrix(this.handle, &mat[0])
-	return mat4_from_bullet(mat)
+// GetTransform implements the core.RigidBody interface
+func (r RigidBody) GetTransform() mgl64.Mat4 {
+	mat := mat4ToBullet(mgl64.Ident4())
+	C.plGetOpenGLMatrix(r.handle, &mat[0])
+	return mat4FromBullet(mat)
 }
 
-func (this RigidBody) SetTransform(transform mgl64.Mat4) {
-	mat := mat4_to_bullet(transform)
-	C.plSetOpenGLMatrix(this.handle, &mat[0])
+// SetTransform implements the core.RigidBody interface
+func (r RigidBody) SetTransform(transform mgl64.Mat4) {
+	mat := mat4ToBullet(transform)
+	C.plSetOpenGLMatrix(r.handle, &mat[0])
 }
 
-func (this RigidBody) ApplyImpulse(impulse mgl64.Vec3, localPoint mgl64.Vec3) {
-	i := vec3_to_bullet(impulse)
-	p := vec3_to_bullet(localPoint)
-	C.plApplyImpulse(this.handle, &i[0], &p[0])
+// ApplyImpulse implements the core.RigidBody interface
+func (r RigidBody) ApplyImpulse(impulse mgl64.Vec3, localPoint mgl64.Vec3) {
+	i := vec3ToBullet(impulse)
+	p := vec3ToBullet(localPoint)
+	C.plApplyImpulse(r.handle, &i[0], &p[0])
 }
 
+// CollisionShape implements the core.CollisionShape interface
 type CollisionShape struct {
 	handle C.plCollisionShapeHandle
 }
 
-func (this CollisionShape) AddChildShape(s core.CollisionShape, p mgl64.Vec3, o mgl64.Quat) {
-	vec := vec3_to_bullet(p)
-	quat := quat_to_bullet(o)
-	C.plAddChildShape(this.handle, s.(CollisionShape).handle, &vec[0], &quat[0])
+// AddChildShape implements the core.CollisionShape interface
+func (c CollisionShape) AddChildShape(s core.CollisionShape, p mgl64.Vec3, o mgl64.Quat) {
+	vec := vec3ToBullet(p)
+	quat := quatToBullet(o)
+	C.plAddChildShape(c.handle, s.(CollisionShape).handle, &vec[0], &quat[0])
 }
 
-func (this CollisionShape) AddVertex(v mgl64.Vec3) {
-	C.plAddVertex(this.handle, C.plReal(v.X()), C.plReal(v.Y()), C.plReal(v.Z()))
+// AddVertex implements the core.CollisionShape interface
+func (c CollisionShape) AddVertex(v mgl64.Vec3) {
+	C.plAddVertex(c.handle, C.plReal(v.X()), C.plReal(v.Y()), C.plReal(v.Z()))
 }
