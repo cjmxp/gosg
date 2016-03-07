@@ -1,4 +1,4 @@
-# gosg [![GoDoc](https://godoc.org/github.com/fcvarela/gosg?status.svg)](https://godoc.org/github.com/fcvarela/gosg)
+# gosg [![Build Status](https://travis-ci.org/fcvarela/specrend.svg?branch=master)](https://travis-ci.org/fcvarela/specrend) [![GoDoc](https://godoc.org/github.com/fcvarela/gosg?status.svg)](https://godoc.org/github.com/fcvarela/gosg)
 
 Package gosg is a lightweight screnegraph/scenetree based rendering toolkit. It provides a set of tools to build standalone windowed 3D applications for MacOS, Linux and Windows.
 
