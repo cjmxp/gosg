@@ -3,7 +3,8 @@ go:
   - 1.5
   - tip
 before_install:
-  sudo apt-get install build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev
+  - sudo apt-get -qq update
+  - sudo apt-get install build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev
 script:
   - go get -t ./...
   - golint ./...
