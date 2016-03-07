@@ -2,9 +2,18 @@ language: go
 go:
   - 1.5
   - tip
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev
+addons:
+  apt:
+    packages:
+      - build-essential
+      - pkg-config
+      - libxinerama-dev
+      - libgl1-mesa-dev
+      - libxi-dev
+      - libxcursor-dev
+      - libxrandr-dev
+      - libbullet-dev
+      - libassimp-dev
 install:
   - go get -t ./...
 script:
