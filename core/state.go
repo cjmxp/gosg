@@ -139,6 +139,20 @@ func NewState() State {
 	return s
 }
 
+// Copy deep copies the state
+func (s *State) Copy() *State {
+	ss := *s
+	ss.uniforms = make(map[string]*Uniform)
+	for k, v := range s.uniforms {
+		ss.Uniform(k).Set(v.value)
+	}
+	for k, v := range s.textures {
+		ss.SetTexture(k, v)
+	}
+
+	return &ss
+}
+
 // SetProgram sets the state's program.
 func (s *State) SetProgram(p Program) {
 	s.program = p
