@@ -1,5 +1,5 @@
 // Package openal provides an implementation of a core.AudioSystem by wrapping OpenAL
-package audiosystem
+package openal
 
 import (
 	"github.com/fcvarela/gosg/core"
