@@ -1,4 +1,7 @@
 sudo: required
+language: go
+go:
+  - tip
 dist: trusty
 before_install:
   - sudo apt-get -qq update
