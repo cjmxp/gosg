@@ -2,21 +2,10 @@ language: go
 go:
   - 1.5
   - tip
-addons:
-  apt:
-    packages:
-      - build-essential
-      - pkg-config
-      - libxinerama-dev
-      - libgl1-mesa-dev
-      - libxi-dev
-      - libxcursor-dev
-      - libxrandr-dev
-      - libbullet-dev
-      - libassimp-dev
-install:
-  - go get -t ./...
+before_install:
+  sudo apt-get install build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev
 script:
+  - go get -t ./...
   - golint ./...
   - test -z "$(golint ./...)"
   - GORACE="halt_on_error=1" go test -race -v ./...
