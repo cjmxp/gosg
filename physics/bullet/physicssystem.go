@@ -1,3 +1,4 @@
+// Package bullet implements the core.PhysicsSystem interface by wrapping the Bullet physics library.
 package bullet
 
 // #cgo pkg-config: bullet

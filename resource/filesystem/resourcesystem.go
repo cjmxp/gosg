@@ -1,3 +1,4 @@
+// Package filesystem provides a core.ResourceSystem which loads resources from the filesystem
 package filesystem
 
 import (

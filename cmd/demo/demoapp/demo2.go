@@ -19,24 +19,24 @@ func makeDemo2Scene() *core.Scene {
 	camera.SetRenderOrder(0)
 
 	node := core.NewNode("GeometryRoot")
-	physicsSystem := core.GetPhysicsSystem()
+	//physicsSystem := core.GetPhysicsSystem()
 
 	for i := -5; i < 5; i++ {
 		for j := -5; j < 5; j++ {
 			randomVec := mgl64.Vec3{float64(i) * 9.96 * 2.0, float64(j) * 9.96 * 2.0, 0.0}
 
 			// load model
-			f16 := core.GetResourceManager().Model("f16.model")
+			f16 := core.GetResourceManager().InstancedModel("f16.model")
 			f16.Translate(randomVec)
 			f16.Rotate(float64(i), randomVec)
 
 			// add rigid body
-			ss := physicsSystem.NewSphereShape(9.96)
-			rb := physicsSystem.CreateRigidBody(12.150, ss)
-			f16.SetRigidBody(rb)
+			//ss := physicsSystem.NewSphereShape(9.96)
+			//rb := physicsSystem.CreateRigidBody(12.150, ss)
+			//f16.SetRigidBody(rb)
 
 			// add body to physics simulation
-			physicsSystem.AddRigidBody(rb)
+			//physicsSystem.AddRigidBody(rb)
 
 			// add model to scenegraph
 			node.AddChild(f16)

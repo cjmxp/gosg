@@ -1,3 +1,4 @@
+// Package dearimgui provides an implementation of core.IMGUISystem by wrapping the C++ library DearIMGUI
 package dearimgui
 
 // #include "gosg_imgui.h"

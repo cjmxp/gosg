@@ -1,0 +1,1 @@
+[![GoDoc](https://godoc.org/github.com/fcvarela/gosg?status.svg)](https://godoc.org/github.com/fcvarela/gosg)

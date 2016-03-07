@@ -1,3 +1,4 @@
+// Package openal provides an implementation of a core.AudioSystem by wrapping OpenAL
 package audiosystem
 
 import (
@@ -12,13 +13,7 @@ type AudioSystem struct {
 }
 
 func init() {
-	core.SetAudioSystem(New())
-}
-
-// New returns an initialized AudioSystem
-func New() *AudioSystem {
-	a := AudioSystem{}
-	return &a
+	core.SetAudioSystem(&AudioSystem{})
 }
 
 // Start implements the core.AudioSystem interface
