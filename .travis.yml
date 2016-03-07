@@ -1,14 +1,11 @@
-language: go
 sudo: required
 dist: trusty
-go:
-  - 1.5
-  - tip
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev
+  - sudo apt-get install -y build-essential pkg-config libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libbullet-dev libassimp-dev golang-go
 script:
   - go get -t ./...
+  - go get -u github.com/golang/lint/golint
   - golint ./...
   - test -z "$(golint ./...)"
   - GORACE="halt_on_error=1" go test -race -v ./...
