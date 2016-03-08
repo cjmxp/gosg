@@ -6,6 +6,9 @@ package main
 // #cgo darwin LDFLAGS: -Bstatic -lassimp -lstdc++ -lz
 // #cgo pkg-config: assimp
 // #cgo CFLAGS: -Wno-attributes
+// #cgo CXXFLAGS: -Wno-attributes
+// #cgo darwin CXXFLAGS: -I/usr/local/include -I/usr/local/include/assimp
+// #cgo darwin CFLAGS: -I/usr/local/include -I/usr/local/include/assimp
 // #include "modelimport.h"
 import "C"
 import (
