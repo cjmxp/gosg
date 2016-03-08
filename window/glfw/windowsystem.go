@@ -201,15 +201,18 @@ func (w *WindowSystem) installCallbacks() {
 
 // Step implements the core.WindowSystem interface
 func (w *WindowSystem) Step() {
+	// swap buffers. this should be moved to a separate call and called by the rendersystem at the end of its work
+	w.window.SwapBuffers()
+
 	// reset input state before callbacks
 	core.GetInputManager().Reset()
 
-	w.window.SwapBuffers()
-	if core.GetTimerManager().Paused() {
-		glfw.WaitEvents()
-	} else {
-		glfw.PollEvents()
-	}
+	//if core.GetTimerManager().Paused() {
+	// this doesn't work properly in Windows
+	//	glfw.WaitEvents()
+	//} else {
+	glfw.PollEvents()
+	//}
 }
 
 // Stop implements the core.WindowSystem interface
@@ -275,7 +278,8 @@ func (w *WindowSystem) MouseMoveCallback(window *glfw.Window, x, y float64) {
 
 // MouseScrollCallback passes mouse scroll events to the core.InputManager
 func (w *WindowSystem) MouseScrollCallback(window *glfw.Window, x, y float64) {
-	if core.GetPlatform() == core.PlatformLinux {
+	if core.GetPlatform() == core.PlatformLinux || core.GetPlatform() == core.PlatformWindows {
+		// just defaults, user may want to invert axes
 		y = -y
 	}
 	core.GetInputManager().MouseScrollCallback(x, y)
