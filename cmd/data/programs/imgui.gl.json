@@ -1,4 +1,10 @@
 {
+  "shaders": {
     "vertex": "imgui.vs.glsl",
     "fragment": "imgui.fs.glsl"
+  },
+  "uniformBufferBindings": {
+    "cameraConstants": 0,
+    "nodeBlock": 1
+  }
 }

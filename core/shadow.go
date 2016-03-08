@@ -13,7 +13,7 @@ type Shadower interface {
 	RenderTarget() RenderTarget
 
 	// Render calls the shadower render implementation by assing a light, a `SceneBlock` and a list of nodes.
-	Render(light *Light, sb SceneBlock, nodes []*Node)
+	Render(light *Light, nodes []*Node)
 }
 
 // ShadowMap is a utility implementation of the Shadower interface which renders shadows by using a shadow map.
@@ -40,7 +40,7 @@ func (s *ShadowMap) RenderTarget() RenderTarget {
 }
 
 // Render implements the Shadower interface
-func (s *ShadowMap) Render(light *Light, sb SceneBlock, nodes []*Node) {
+func (s *ShadowMap) Render(light *Light, nodes []*Node) {
 	/*
 		1-find all objects that are inside the current camera frustum
 		2-find minimal aa bounding box that encloses them all
@@ -84,7 +84,9 @@ func (s *ShadowMap) Render(light *Light, sb SceneBlock, nodes []*Node) {
 		mgl64.Vec4{0.0, 0.0, 0.5, 0.0},
 		mgl64.Vec4{0.5, 0.5, 0.5, 1.0}).Mul4(vpmatrix)
 	light.Block.VPMatrix = Mat4DoubleToFloat(biasvpmatrix)
-	s.camera.PreRender(sb)
+
+	s.camera.PrepareViewport()
+	s.camera.constants.SetMatrices(s.camera.projectionMatrix, s.camera.viewMatrix)
 
 	meshBuckets := MeshBuckets(nodes)
 	for mesh, bucketNodes := range meshBuckets {
@@ -92,44 +94,13 @@ func (s *ShadowMap) Render(light *Light, sb SceneBlock, nodes []*Node) {
 			// hack
 			bucketNodes[0].State().SetTexture(2, s.camera.renderTarget.DepthTexture())
 			bucketNodes[0].State().Uniform("shadowTex").Set(2)
-			RenderFnZPassInstanced(sb, []*Node{bucketNodes[0]})
+			RenderFnZPassInstanced(s.camera.constants.buffer, []*Node{bucketNodes[0]})
 		} else {
 			for i := range bucketNodes {
 				bucketNodes[i].State().SetTexture(2, s.camera.renderTarget.DepthTexture())
 				bucketNodes[i].State().Uniform("shadowTex").Set(2)
 			}
-			RenderFnZPass(sb, bucketNodes)
+			RenderFnZPass(s.camera.constants.buffer, bucketNodes)
 		}
 	}
 }
-
-/*type CascadedShadowMap struct {
-	camera *Camera
-}
-
-func NewCascadedShadowMap(size uint16, cascades uint8) *CascadedShadowMap {
-	rt := renderSystem.NewRenderTarget(uint32(size), uint32(size), cascades, 0)
-	c := NewCamera("ShadowCamera", OrthographicCamera)
-	c.SetRenderTarget(rt)
-	c.SetAutoReshape(false)
-	c.SetViewport(mgl32.Vec4{0.0, 0.0, float32(size), float32(size)})
-	c.SetRenderTechnique(nil)
-	return &CascadedShadowMap{c}
-}
-
-func (s *CascadedShadowMap) Render(mainCamera *Camera, sb SceneBlock, nodes []*Node) {
-	s.camera.PreRender(sb)
-
-	meshBuckets := MeshBuckets(nodes)
-	layerCount := int(s.camera.RenderTarget().DepthLayers())
-	for l := 0; l < layerCount; l++ {
-		for mesh, bucketNodes := range meshBuckets {
-			if _, ok := mesh.(InstancedMesh); ok {
-				RenderFn_ZPassInstanced(sb, []*Node{bucketNodes[0]})
-			} else {
-				RenderFn_ZPass(sb, bucketNodes)
-			}
-		}
-	}
-}
-*/

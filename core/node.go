@@ -367,9 +367,9 @@ func (n *Node) Copy() *Node {
 
 	for _, c := range n.children {
 		cc := *c
-		cc.state.uniforms = make(map[string]*Uniform)
+		cc.state.uniforms = make(map[string]Uniform)
 		for k, v := range c.state.uniforms {
-			cc.state.Uniform(k).Set(v.value)
+			cc.state.Uniform(k).Set(v.Value())
 		}
 		for k, v := range c.state.textures {
 			cc.state.SetTexture(k, v)

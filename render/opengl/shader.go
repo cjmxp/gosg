@@ -14,8 +14,8 @@ type shader struct {
 	source []byte
 }
 
-func newShader(shaderfile string, shaderType uint32, data []byte) *shader {
-	s := shader{shaderfile, shaderType, 0, data}
+func newShader(name string, shaderType uint32, data []byte) *shader {
+	s := shader{name, shaderType, 0, data}
 	return &s
 }
 

@@ -7,14 +7,6 @@ import (
 	"github.com/golang/glog"
 )
 
-// SceneBlock is a constant buffer passed to all programs which contains global camera transforms
-// and a list of active lights.
-type SceneBlock interface {
-	Lights() []*Light
-	SetLights([]*Light)
-	SetMatricesFromCamera(*Camera)
-}
-
 // Scene represents a scenegraph and contains information about how it should be composed with other scenes on
 // a scene stack. Scenes are not meant to be wrapped by users, but to be data configured for the expected behaviour.
 type Scene struct {
@@ -32,8 +24,8 @@ type Scene struct {
 	// per camera draw lists
 	drawables map[string][]*Node
 
-	// main scene block (buffer, etc)
-	block SceneBlock
+	// per scene lights list
+	lights []*Light
 }
 
 func deleteScene(s *Scene) {
@@ -54,7 +46,7 @@ func NewScene(name string) *Scene {
 	s.active = true
 	s.cameraList = make([]*Camera, 0)
 	s.drawables = make(map[string][]*Node)
-	s.block = renderSystem.NewSceneBlock()
+	s.lights = make([]*Light, 0)
 
 	runtime.SetFinalizer(&s, deleteScene)
 
@@ -116,32 +108,33 @@ func (s *Scene) cull() {
 		c.Reshape(windowSystem.WindowSize())
 	}
 
-	var lights []*Light
+	s.lights = nil
 	if s.root.lightExtractor != nil {
-		s.root.lightExtractor.Run(s.root, &lights)
+		s.root.lightExtractor.Run(s.root, &s.lights)
 	}
 
 	for _, camera := range s.cameraList {
-		var nodeBucket []*Node
+		camera.constants.SetLights(s.lights)
 		sceneRoot := camera.Scene()
-		sceneRoot.CullComponent().Run(camera, sceneRoot, &nodeBucket)
-		s.drawables[camera.name] = nodeBucket
-	}
 
-	s.block.SetLights(lights)
+		var bucket []*Node
+		sceneRoot.CullComponent().Run(s, camera, sceneRoot, &bucket)
+		s.drawables[camera.name] = bucket
+	}
 }
 
 func (s *Scene) draw() {
 	for _, camera := range s.cameraList {
 		if camera.projectionType == PerspectiveProjection {
-			for _, light := range s.block.Lights() {
+			for _, light := range s.lights {
 				if light.Shadower != nil {
-					light.Shadower.Render(light, s.block, s.drawables[camera.name])
+					light.Shadower.Render(light, s.drawables[camera.name])
 				}
 			}
 		}
-		camera.PreRender(s.block)
-		camera.Render(s.block, s.drawables[camera.name])
+
+		camera.PrepareViewport()
+		camera.Render(s.drawables[camera.name])
 	}
 }
 

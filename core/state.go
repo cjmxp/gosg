@@ -73,15 +73,16 @@ type ScissorState struct {
 // State wraps sub states for a given node, along with material, bounding box drawing flags and program uniforms.
 // This will soon become a material.
 type State struct {
-	uniforms map[string]*Uniform
-	textures map[uint32]Texture
-	program  Program
-	Cull     CullState
-	Blend    BlendState
-	Depth    DepthState
-	Color    ColorState
-	Scissor  ScissorState
-	AABB     bool
+	uniforms       map[string]Uniform
+	uniformBuffers map[string]UniformBuffer
+	textures       map[uint32]Texture
+	program        Program
+	Cull           CullState
+	Blend          BlendState
+	Depth          DepthState
+	Color          ColorState
+	Scissor        ScissorState
+	AABB           bool
 }
 
 // NewAABBState returns a new state suitable to draw AABBs
@@ -126,7 +127,8 @@ func NewInstancedZPassState() State {
 // NewState returns a new default state
 func NewState() State {
 	s := State{
-		make(map[string]*Uniform),
+		make(map[string]Uniform),
+		make(map[string]UniformBuffer),
 		make(map[uint32]Texture),
 		nil,
 		CullState{true, CullBack},
@@ -142,9 +144,9 @@ func NewState() State {
 // Copy deep copies the state
 func (s *State) Copy() *State {
 	ss := *s
-	ss.uniforms = make(map[string]*Uniform)
+	ss.uniforms = make(map[string]Uniform)
 	for k, v := range s.uniforms {
-		ss.Uniform(k).Set(v.value)
+		ss.Uniform(k).Set(v.Value())
 	}
 	for k, v := range s.textures {
 		ss.SetTexture(k, v)
@@ -164,15 +166,15 @@ func (s *State) Program() Program {
 }
 
 // Uniforms returns the state's uniform map.
-func (s *State) Uniforms() map[string]*Uniform {
+func (s *State) Uniforms() map[string]Uniform {
 	return s.uniforms
 }
 
 // Uniform returns the uniform with the given name.
-func (s *State) Uniform(name string) *Uniform {
+func (s *State) Uniform(name string) Uniform {
 	_, ok := s.uniforms[name]
 	if ok == false {
-		s.uniforms[name] = &Uniform{nil, true}
+		s.uniforms[name] = renderSystem.NewUniform()
 	}
 	return s.uniforms[name]
 }
@@ -182,7 +184,21 @@ func (s *State) SetTexture(unit uint32, t Texture) {
 	s.textures[unit] = t
 }
 
-// Textures returns the state's texture map
+// Textures returns the state's texture binding map
 func (s *State) Textures() map[uint32]Texture {
 	return s.textures
+}
+
+// UniformBuffer returns the uniform buffer with the given name
+func (s *State) UniformBuffer(name string) UniformBuffer {
+	_, ok := s.uniformBuffers[name]
+	if !ok {
+		s.uniformBuffers[name] = renderSystem.NewUniformBuffer()
+	}
+	return s.uniformBuffers[name]
+}
+
+// UniformBuffers returns the state's uniform buffers
+func (s *State) UniformBuffers() map[string]UniformBuffer {
+	return s.uniformBuffers
 }

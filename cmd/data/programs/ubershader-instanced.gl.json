@@ -1,4 +1,10 @@
 {
-  "vertex": "ubershader-instanced.vs.glsl",
-  "fragment": "ubershader.fs.glsl"
+  "shaders": {
+    "vertex": "ubershader-instanced.vs.glsl",
+    "fragment": "ubershader.fs.glsl"
+  },
+  "uniformBufferBindings": {
+    "cameraConstants": 0,
+    "nodeBlock": 1
+  }
 }

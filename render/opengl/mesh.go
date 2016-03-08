@@ -299,13 +299,12 @@ func (m *Mesh) SetIndices(indices []uint16) {
 }
 
 // Draw implements the core.Mesh interface
-func (m *Mesh) Draw(sb core.SceneBlock, st *core.State) {
+func (m *Mesh) Draw(ub core.UniformBuffer, st *core.State) {
 	if m.dirty {
 		m.compile()
 	}
 
-	bindRenderState(*st, false)
-	bindSceneBlock(sb.(*SceneBlock))
+	bindRenderState(ub, *st, false)
 
 	gl.BindVertexArray(m.vao)
 	gl.DrawElements(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil)
@@ -313,9 +312,8 @@ func (m *Mesh) Draw(sb core.SceneBlock, st *core.State) {
 }
 
 // Draw implements the core.IMGUIMesh interface
-func (m *IMGUIMesh) Draw(sb core.SceneBlock, st *core.State) {
-	bindSceneBlock(sb.(*SceneBlock))
-	bindRenderState(*st, false)
+func (m *IMGUIMesh) Draw(ub core.UniformBuffer, st *core.State) {
+	bindRenderState(ub, *st, false)
 
 	imguiSystem := core.GetIMGUISystem()
 	drawData := imguiSystem.GetDrawData()
@@ -421,14 +419,13 @@ func (i *InstancedMesh) SetModelMatrices(matrices []float32) {
 }
 
 // Draw implements the core.InstancedMesh interface
-func (i *InstancedMesh) Draw(sb core.SceneBlock, st *core.State) {
+func (i *InstancedMesh) Draw(ub core.UniformBuffer, st *core.State) {
 	// we compile on the fly with opengl, sucks
 	if i.dirty {
 		i.compile()
 	}
 
-	bindRenderState(*st, false)
-	bindSceneBlock(sb.(*SceneBlock))
+	bindRenderState(ub, *st, false)
 
 	gl.BindVertexArray(i.vao)
 	gl.DrawElementsInstanced(i.primitiveType, i.indexcount, gl.UNSIGNED_SHORT, nil, i.instanceCount)

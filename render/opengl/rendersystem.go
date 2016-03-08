@@ -31,7 +31,7 @@ func New() *RenderSystem {
 // Start implements the core.RenderSystem interface
 func (r *RenderSystem) Start() {
 	// set the default state
-	bindRenderState(currentState, true)
+	bindRenderState(nil, currentState, true)
 
 	// create timers
 	gl.GenQueries(1, &r.timerQuery)
@@ -88,6 +88,13 @@ func (r *RenderSystem) Stop() {
 
 // PrepareViewport implements the core.RenderSystem interface
 func (r *RenderSystem) PrepareViewport(c *core.Camera) {
+	// bind specific render target
+	if c.RenderTarget() != nil {
+		c.RenderTarget().(*RenderTarget).bind()
+	} else {
+		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+	}
+
 	// reset viewport
 	v := c.Viewport()
 	gl.Viewport(int32(v[0]), int32(v[1]), int32(v[2]), int32(v[3]))
@@ -106,13 +113,6 @@ func (r *RenderSystem) PrepareViewport(c *core.Camera) {
 		clearargs = clearargs | gl.DEPTH_BUFFER_BIT
 	}
 
-	// bind specific render target
-	if c.RenderTarget() != nil {
-		c.RenderTarget().(*RenderTarget).bind()
-	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-	}
-
 	if clearargs != 0 {
 		// need to activate in order for clear to succeed
 		clearState := currentState
@@ -121,7 +121,7 @@ func (r *RenderSystem) PrepareViewport(c *core.Camera) {
 		clearState.Color.Mask = true
 		clearState.Blend.Enabled = false
 		clearState.Scissor.Enabled = false
-		bindRenderState(clearState, true)
+		bindRenderState(nil, clearState, true)
 		gl.Clear(clearargs)
 	}
 }

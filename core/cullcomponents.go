@@ -2,9 +2,9 @@ package core
 
 // CullComponent is an interface that wraps culling of a scenegraph.
 type CullComponent interface {
-	// Run culls a scenegraph node. A camera is provided for visibility/frustum checks.
+	// Run culls a scenegraph node. A scene and camera are provided for visibility/frustum checks.
 	// If the policy dictates the node is to be drawn, then it should be added to the nodeBucket.
-	Run(camera *Camera, node *Node, nodeBucket *[]*Node)
+	Run(*Scene, *Camera, *Node, *[]*Node)
 }
 
 // DefaultCullComponent implements a scenegraph culler. The policy for this culler is to
@@ -14,7 +14,7 @@ type CullComponent interface {
 type DefaultCullComponent struct{}
 
 // Run implements the CullComponent interface
-func (cc *DefaultCullComponent) Run(camera *Camera, node *Node, nodeBucket *[]*Node) {
+func (cc *DefaultCullComponent) Run(scene *Scene, camera *Camera, node *Node, nodeBucket *[]*Node) {
 	if node.worldBounds.InFrustum(camera.Frustum()) == false {
 		return
 	}
@@ -25,14 +25,11 @@ func (cc *DefaultCullComponent) Run(camera *Camera, node *Node, nodeBucket *[]*N
 
 	// the default implementation is to add ourselves to the bucket
 	if node.mesh != nil {
-		// update camera uniforms
-		mMatrix := node.WorldTransform()
-		node.State().Uniform("mMatrix").Set(mMatrix)
 		*nodeBucket = append(*nodeBucket, node)
 	}
 
 	for _, c := range node.children {
-		c.cullComponent.Run(camera, c, nodeBucket)
+		c.cullComponent.Run(scene, camera, c, nodeBucket)
 	}
 }
 
@@ -42,14 +39,13 @@ func (cc *DefaultCullComponent) Run(camera *Camera, node *Node, nodeBucket *[]*N
 type AlwaysPassCullComponent struct{}
 
 // Run implements the CullComponent interface
-func (apcc *AlwaysPassCullComponent) Run(camera *Camera, node *Node, nodeBucket *[]*Node) {
+func (apcc *AlwaysPassCullComponent) Run(s *Scene, c *Camera, n *Node, nb *[]*Node) {
 	// the default implementation is to add ourselves to the bucket
-	if node.mesh != nil {
-		node.State().Uniform("mMatrix").Set(node.WorldTransform())
-		*nodeBucket = append(*nodeBucket, node)
+	if n.mesh != nil {
+		*nb = append(*nb, n)
 	}
 
-	for _, c := range node.children {
-		c.cullComponent.Run(camera, c, nodeBucket)
+	for _, ch := range n.children {
+		ch.cullComponent.Run(s, c, ch, nb)
 	}
 }

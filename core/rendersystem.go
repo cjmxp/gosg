@@ -33,17 +33,19 @@ type RenderSystem interface {
 	ProgramExtension() string
 
 	// NewProgram creates a new program from a list of subprogram source files.
-	NewProgram(name string, programs map[string][]byte) Program
+	NewProgram(name string, data []byte) Program
 
 	// NewTexture creates a new texture from a byte buffer of image data
 	NewTexture(r []byte) Texture
 
+	// NewUniform creates a new empty uniform
+	NewUniform() Uniform
+
+	// NewUniformBuffer creates a new empty uniform buffer
+	NewUniformBuffer() UniformBuffer
+
 	// NewRawTexture creates an unverified/unvalidated texture from a width, height and byte buffer.
 	NewRawTexture(width, height int, payload []byte) Texture
-
-	// NewSceneBlock creates a new SceneBlock which is a specialized constant buffer. This will be replaced
-	// with generic constant buffers soon.
-	NewSceneBlock() SceneBlock
 
 	// NewRenderTarget returns a render target of width, height, depth layer count and color layer count.
 	// These are implementation specific but will generally be framebuffer attachments.
@@ -109,40 +111,40 @@ func MeshBuckets(nodes []*Node) map[Mesh][]*Node {
 	return buckets
 }
 
-// RenderFn is the building block of rendering, it accepts a scene block, a camera and a list of nodes
+// RenderFn is the building block of rendering, it accepts a uniformbuffer, a camera and a list of nodes
 // and renders them.
-type RenderFn func(sb SceneBlock, nodes []*Node)
+type RenderFn func(UniformBuffer, []*Node)
 
 // RenderFnZPass sorts the nodes near-to-far, sets a non-color-write state with a special depth-only shader
-func RenderFnZPass(sb SceneBlock, nodes []*Node) {
+func RenderFnZPass(ub UniformBuffer, nodes []*Node) {
 	for _, node := range nodes {
 		st := NewZPassState()
-		st.Uniform("mMatrix").Set(node.State().Uniform("mMatrix").Value())
-		node.mesh.Draw(sb, &st)
+		node.mesh.Draw(ub, &st)
 	}
 }
 
 // RenderFnZPassInstanced sorts the nodes near-to-far, sets a non-color-write state with a special depth-only shader
-func RenderFnZPassInstanced(sb SceneBlock, nodes []*Node) {
+func RenderFnZPassInstanced(ub UniformBuffer, nodes []*Node) {
 	st := NewInstancedZPassState()
-	nodes[0].mesh.Draw(sb, &st)
+	nodes[0].mesh.Draw(ub, &st)
 }
 
 // RenderFnOpaqueDiffusePass renders nodes with zfunc equal
-func RenderFnOpaqueDiffusePass(sb SceneBlock, nodes []*Node) {
+func RenderFnOpaqueDiffusePass(ub UniformBuffer, nodes []*Node) {
 	for _, node := range nodes {
 		if node.state.Blend.Enabled {
 			continue
 		}
 		st := *node.State()
-		st.Depth.Mask = true
-		st.Depth.Func = DepthLessEqual
-		node.mesh.Draw(sb, &st)
+		st.Depth.Mask = false
+		st.Depth.Enabled = true
+		st.Depth.Func = DepthEqual
+		node.mesh.Draw(ub, &st)
 	}
 }
 
 // RenderFnTransparentDiffusePass renders transparent nodes with back-to-front with blending
-func RenderFnTransparentDiffusePass(sb SceneBlock, nodes []*Node) {
+func RenderFnTransparentDiffusePass(ub UniformBuffer, nodes []*Node) {
 	for _, node := range nodes {
 		if !node.state.Blend.Enabled {
 			continue
@@ -150,34 +152,45 @@ func RenderFnTransparentDiffusePass(sb SceneBlock, nodes []*Node) {
 
 		st := *node.State()
 		st.Depth.Enabled = true
-		st.Depth.Mask = false
+		st.Depth.Mask = true
 		st.Depth.Func = DepthLessEqual
 		st.Blend.SrcMode = BlendSrcAlpha
 		st.Blend.DstMode = BlendOneMinusSrcAlpha
-		node.mesh.Draw(sb, &st)
+		node.mesh.Draw(ub, &st)
 	}
 }
 
 // DefaultRenderTechnique does z pre-pass, diffuse pass, transparency pass
-func DefaultRenderTechnique(sb SceneBlock, nodes []*Node) {
+func DefaultRenderTechnique(ub UniformBuffer, nodes []*Node) {
 	// bucket per materials, less state changes
 	meshBuckets := MeshBuckets(nodes)
+
+	// zpass
+	for mesh, bucketNodes := range meshBuckets {
+		if _, ok := mesh.(InstancedMesh); ok {
+			RenderFnZPassInstanced(ub, []*Node{bucketNodes[0]})
+		} else {
+			RenderFnZPass(ub, bucketNodes)
+		}
+	}
 
 	// diffuse opaque pass
 	for mesh, bucketNodes := range meshBuckets {
 		if _, ok := mesh.(InstancedMesh); ok {
-			RenderFnOpaqueDiffusePass(sb, []*Node{bucketNodes[0]})
+			//RenderFnOpaqueDiffusePass([]*Node{bucketNodes[0]})
+			RenderFnOpaqueDiffusePass(ub, []*Node{bucketNodes[0]})
 		} else {
-			RenderFnOpaqueDiffusePass(sb, bucketNodes)
+			RenderFnOpaqueDiffusePass(ub, bucketNodes)
 		}
 	}
 
+	return
 	//	diffuse transparent pass
 	for mesh, bucketNodes := range meshBuckets {
 		if _, ok := mesh.(InstancedMesh); ok {
-			RenderFnTransparentDiffusePass(sb, []*Node{bucketNodes[0]})
+			RenderFnTransparentDiffusePass(ub, []*Node{bucketNodes[0]})
 		} else {
-			RenderFnTransparentDiffusePass(sb, bucketNodes)
+			RenderFnTransparentDiffusePass(ub, bucketNodes)
 		}
 	}
 
@@ -189,18 +202,18 @@ func DefaultRenderTechnique(sb SceneBlock, nodes []*Node) {
 		}
 	}
 
-	AABBRenderTechnique(sb, aabbNodes)
+	AABBRenderTechnique(ub, aabbNodes)
 }
 
 // IMGUIRenderTechnique renders IMGUI UI nodes.
-func IMGUIRenderTechnique(sb SceneBlock, nodes []*Node) {
+func IMGUIRenderTechnique(ub UniformBuffer, nodes []*Node) {
 	for _, node := range nodes {
-		node.mesh.Draw(sb, node.State())
+		node.mesh.Draw(ub, node.State())
 	}
 }
 
 // AABBRenderTechnique renders AABBs and OBB. OBBs are rendered red and AABBs white.
-func AABBRenderTechnique(sb SceneBlock, nodes []*Node) {
+func AABBRenderTechnique(ub UniformBuffer, nodes []*Node) {
 	// create transform list from nodes, like meshbuckets
 	if boundsMesh == nil {
 		boundsMesh = NewAABBMesh()
@@ -211,22 +224,22 @@ func AABBRenderTechnique(sb SceneBlock, nodes []*Node) {
 		st := NewAABBState()
 		center := node.Bounds().Center()
 		size := node.mesh.Bounds().Size()
-		st.Uniform("in_color").Set(mgl64.Vec4{1.0, 0.0, 0.0, 1.0})
+		st.Uniform("flatColor").Set(mgl64.Vec4{1.0, 0.0, 0.0, 1.0})
 		st.Uniform("mMatrix").Set(
 			node.WorldTransform().Mul4(
 				mgl64.Translate3D(center[0], center[1], center[2]).Mul4(
 					mgl64.Scale3D(size[0], size[1], size[2]))))
-		boundsMesh.Draw(sb, &st)
+		boundsMesh.Draw(ub, &st)
 
 		// world bounds: white
 		st = NewAABBState()
 		center = node.worldBounds.Center()
 		size = node.worldBounds.Size()
 		// world bounds, no need for node transforms
-		st.Uniform("in_color").Set(mgl64.Vec4{1.0, 1.0, 1.0, 1.0})
+		st.Uniform("flatColor").Set(mgl64.Vec4{1.0, 1.0, 1.0, 1.0})
 		st.Uniform("mMatrix").Set(
 			mgl64.Translate3D(center[0], center[1], center[2]).Mul4(
 				mgl64.Scale3D(size[0], size[1], size[2])))
-		boundsMesh.Draw(sb, &st)
+		boundsMesh.Draw(ub, &st)
 	}
 }

@@ -2,6 +2,7 @@ package opengl
 
 import (
 	"reflect"
+	"unsafe"
 
 	"github.com/fcvarela/gosg/core"
 
@@ -11,58 +12,70 @@ import (
 	"github.com/golang/glog"
 )
 
-// binds uniform in currently active state
-func bindUniform(name string, p *Program, u *core.Uniform) {
-	if u.Dirty() == false || u.Value() == nil {
-		return
-	}
+// Uniform implements the core.Uniform interface
+type Uniform struct {
+	value interface{}
+}
 
-	uloc, found := p.uniformLocations[name]
-	if found == false {
-		return
-	}
+// UniformBuffer implements the core.UniformBuffer interface
+type UniformBuffer struct {
+	id uint32
+}
 
+// NewUniform implements the core.RenderSystem interface
+func (r *RenderSystem) NewUniform() core.Uniform {
+	return &Uniform{nil}
+}
+
+// NewUniformBuffer implements the core.RenderSystem interface
+func (r *RenderSystem) NewUniformBuffer() core.UniformBuffer {
+	ub := &UniformBuffer{}
+	gl.GenBuffers(1, &ub.id)
+	return ub
+}
+
+// Set implements the core.Uniform interface
+func (u *Uniform) Set(value interface{}) {
+	u.value = value
+}
+
+// Value implements the core.Uniform interface
+func (u *Uniform) Value() interface{} {
+	return u.value
+}
+
+// Copy returns a copy of the uniform.
+func (u *Uniform) Copy() core.Uniform {
 	switch uval := u.Value().(type) {
 	case mgl32.Mat4:
-		gl.UniformMatrix4fv(uloc, 1, false, &uval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case mgl64.Mat4:
-		newval := core.Mat4DoubleToFloat(uval)
-		gl.UniformMatrix4fv(uloc, 1, false, &newval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case mgl64.Vec4:
-		newval := core.Vec4DoubleToFloat(uval)
-		gl.Uniform4fv(uloc, 1, &newval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case mgl64.Vec3:
-		newval := core.Vec3DoubleToFloat(uval)
-		gl.Uniform3fv(uloc, 1, &newval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case mgl64.Vec2:
-		newval := core.Vec2DoubleToFloat(uval)
-		gl.Uniform2fv(uloc, 1, &newval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case []float32:
-		gl.Uniform1fv(uloc, int32(len(uval)), &uval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case []mgl32.Vec2:
-		newval := make([]float32, len(uval)*2)
-		for i := 0; i < len(uval); i++ {
-			newval[i*2+0] = uval[i].X()
-			newval[i*2+1] = uval[i].Y()
-		}
-		gl.Uniform2fv(uloc, int32(len(uval)), &newval[0])
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case int:
-		gl.Uniform1i(uloc, int32(uval))
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case float32:
-		gl.Uniform1f(uloc, uval)
-		u.SetDirty(false)
+		return &Uniform{uval}
 	case float64:
-		gl.Uniform1f(uloc, float32(uval))
-		u.SetDirty(false)
+		return &Uniform{uval}
 	default:
-		glog.Fatalln("UNSUPPORTED -- Uniform: %s Type: %s\n", name, reflect.TypeOf(u.Value()))
+		glog.Fatalf("Unsupported uniform type: %s\n", reflect.TypeOf(u.Value()))
 	}
+
+	return nil
+}
+
+// Set implements the core.UniformBuffer interface
+func (ub *UniformBuffer) Set(data unsafe.Pointer, dataLen int) {
+	gl.BindBuffer(gl.UNIFORM_BUFFER, ub.id)
+	gl.BufferData(gl.UNIFORM_BUFFER, dataLen, data, gl.DYNAMIC_DRAW)
 }

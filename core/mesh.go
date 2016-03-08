@@ -28,7 +28,7 @@ type Mesh interface {
 	SetName(name string)
 	Name() string
 
-	Draw(sb SceneBlock, st *State)
+	Draw(ub UniformBuffer, st *State)
 
 	Bounds() *AABB
 }

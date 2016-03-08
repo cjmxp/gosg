@@ -35,9 +35,9 @@ func makeGeometrySubscene() (root *core.Node, camera *core.Camera) {
 			f16.Rotate(float64(i), randomVec)
 
 			// set aabb on subnodes
-			for _, c := range f16.Children() {
-				c.State().AABB = true
-			}
+			//for _, c := range f16.Children() {
+			//	c.State().AABB = true
+			//}
 
 			// add model to scenegraph
 			geometryNode.AddChild(f16)
@@ -56,7 +56,6 @@ func makeGeometrySubscene() (root *core.Node, camera *core.Camera) {
 			Diffuse:  mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
 			Specular: mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
 		},
-
 		Shadower: shadowMap,
 	}
 	lightNode1.SetLight(light1)

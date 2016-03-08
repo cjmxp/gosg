@@ -17,7 +17,12 @@ layout (std140) uniform sceneBlock {
     light lights[16];
 };
 
+// this is the same for all our models
 layout (location = 0) in vec3 position_in;
+layout (location = 1) in vec3 normal_in;
+layout (location = 2) in vec3 tangent_in;
+layout (location = 3) in vec3 bitangent_in;
+layout (location = 4) in vec3 tcoords0_in;
 layout (location = 5) in mat4 mMatrix;
 
 void main() {

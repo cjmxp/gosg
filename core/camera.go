@@ -2,6 +2,7 @@ package core
 
 import (
 	"runtime"
+	"unsafe"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -54,6 +55,7 @@ type Camera struct {
 	renderOrder      uint8
 	renderTarget     RenderTarget
 	frustum          [6]mgl64.Vec4
+	constants        *CameraConstants
 	renderTechnique  RenderFn
 }
 
@@ -61,13 +63,19 @@ type Camera struct {
 type CamerasByRenderOrder []*Camera
 
 // Len implements the sort.Interface interface.
-func (a CamerasByRenderOrder) Len() int { return len(a) }
+func (a CamerasByRenderOrder) Len() int {
+	return len(a)
+}
 
 // Swap implements the sort.Interface interface.
-func (a CamerasByRenderOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a CamerasByRenderOrder) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
 
 // Less implements the sort.Interface interface.
-func (a CamerasByRenderOrder) Less(i, j int) bool { return a[i].renderOrder < a[j].renderOrder }
+func (a CamerasByRenderOrder) Less(i, j int) bool {
+	return a[i].renderOrder < a[j].renderOrder
+}
 
 func deleteCamera(c *Camera) {
 	glog.Info("Camera finalizer start: ", c.name)
@@ -87,6 +95,7 @@ func NewCamera(name string, projType ProjectionType) *Camera {
 	cam.clearMode = ClearColor | ClearDepth
 	cam.SetProjectionType(projType)
 	cam.node = NewNode(name)
+	cam.constants = NewCameraConstants()
 	cam.renderTechnique = DefaultRenderTechnique
 
 	runtime.SetFinalizer(&cam, deleteCamera)
@@ -252,6 +261,11 @@ func (c *Camera) SetRenderTarget(rt RenderTarget) {
 	c.renderTarget = rt
 }
 
+// Constants returns the camera's constants. This contains constant buffers for vertex shaders, etc.
+func (c *Camera) Constants() *CameraConstants {
+	return c.constants
+}
+
 // RenderOrder order returns the camera's render order.
 func (c *Camera) RenderOrder() uint8 {
 	return c.renderOrder
@@ -272,15 +286,66 @@ func (c *Camera) RenderTechnique() RenderFn {
 	return c.renderTechnique
 }
 
-// PreRender prepares the camera for rendering. It resets the viewport and clears
-// the rendertarget buffers is needed and also configures the sceneblock with its
-// projection and view matrices.
-func (c *Camera) PreRender(sb SceneBlock) {
+// PrepareViewport prepares the camera for rendering. It resets the viewport and clears
+// the rendertarget buffers.
+func (c *Camera) PrepareViewport() {
 	renderSystem.PrepareViewport(c)
-	sb.SetMatricesFromCamera(c)
 }
 
 // Render calls the camera's render technique function.
-func (c *Camera) Render(sb SceneBlock, nodes []*Node) {
-	c.renderTechnique(sb, nodes)
+func (c *Camera) Render(nodes []*Node) {
+	c.constants.SetMatrices(c.ProjectionMatrix(), c.ViewMatrix())
+	c.renderTechnique(c.constants.buffer, nodes)
+}
+
+type innerConstants struct {
+	ViewMatrix           mgl32.Mat4
+	ProjectionMatrix     mgl32.Mat4
+	ViewProjectionMatrix mgl32.Mat4
+	LightCount           mgl32.Vec4
+	LightBlocks          [16]LightBlock
+}
+
+// CameraConstants holds a uniform buffer passed to all programs which contains global camera transforms
+// and a list of active lights.
+type CameraConstants struct {
+	inner  innerConstants
+	buffer UniformBuffer
+}
+
+const (
+	// 16 lights * 16 floats per light + 4 floats lightcount, all mult4 (sizeof float)
+	sceneBlockLen = (3*16 + 16*16 + 4) * 4
+)
+
+// NewCameraConstants returns a new CameraConstants. The UniformBuffer is returned by the rendersystem.
+func NewCameraConstants() *CameraConstants {
+	return &CameraConstants{innerConstants{}, renderSystem.NewUniformBuffer()}
+}
+
+// SetMatrices implements the SceneBlock interface
+func (sb *CameraConstants) SetMatrices(pMatrix, vMatrix mgl64.Mat4) {
+	sb.inner.ViewMatrix = Mat4DoubleToFloat(vMatrix)
+	sb.inner.ProjectionMatrix = Mat4DoubleToFloat(pMatrix)
+	sb.inner.ViewProjectionMatrix = Mat4DoubleToFloat(pMatrix.Mul4(vMatrix))
+
+	// copy to buffer
+	inner := sb.inner
+	sb.buffer.Set(unsafe.Pointer(&inner), sceneBlockLen)
+}
+
+// SetLights implements the SceneBlock interface
+func (sb *CameraConstants) SetLights(l []*Light) {
+	sb.inner.LightCount = mgl32.Vec4{0.0, 0.0, 0.0, 0.0}
+
+	// copy lights
+	for i := 0; i < len(l) && i < len(sb.inner.LightBlocks); i++ {
+		sb.inner.LightCount = sb.inner.LightCount.Add(mgl32.Vec4{1.0, 1.0, 1.0, 1.0})
+		sb.inner.LightBlocks[i] = l[i].Block
+	}
+}
+
+// UniformBuffer returns the camera constants uniform buffer
+func (sb *CameraConstants) UniformBuffer() UniformBuffer {
+	return sb.buffer
 }

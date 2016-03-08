@@ -1,24 +1,37 @@
 package opengl
 
 import (
+	"reflect"
 	"runtime"
 	"strings"
 
 	"github.com/fcvarela/gosg/core"
 	"github.com/golang/glog"
 
+	"encoding/json"
+
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 // Program is an OpenGL program
 type Program struct {
-	name                string
-	id                  uint32
-	shaders             map[string]*shader
-	compileLog          string
-	uniformLog          string
-	uniformLocations    map[string]int32
-	uniformBlockIndexes map[string]uint32
+	name                    string
+	id                      uint32
+	shaders                 map[string]*shader
+	compileLog              string
+	uniformLog              string
+	uniformLocations        map[string]int32
+	uniformBlockIndexes     map[string]uint32
+	uniformBufferBindings   map[string]uint32
+	uniformBufferBindingIDs map[string]uint32
+}
+
+// programSpec is the struct we get as bytes on calls to NewProgram
+type programSpec struct {
+	Shaders               map[string]string `json:"shaders"`
+	UniformBufferBindings map[string]uint32 `json:"uniformBufferBindings"`
 }
 
 func programCleanup(p *Program) {
@@ -42,7 +55,12 @@ func (r *RenderSystem) ProgramExtension() string {
 }
 
 // NewProgram implements the core.RenderSystem interface.
-func (r *RenderSystem) NewProgram(name string, shaders map[string][]byte) core.Program {
+func (r *RenderSystem) NewProgram(name string, data []byte) core.Program {
+	var spec programSpec
+	if err := json.Unmarshal(data, &spec); err != nil {
+		glog.Fatal("Error reading program spec: ", err)
+	}
+
 	// create program
 	prog := Program{
 		name,
@@ -52,11 +70,19 @@ func (r *RenderSystem) NewProgram(name string, shaders map[string][]byte) core.P
 		"",
 		make(map[string]int32),
 		make(map[string]uint32),
+		make(map[string]uint32),
+		make(map[string]uint32),
 	}
 
 	// set shaders
-	for k, v := range shaders {
-		prog.shaders[k] = newShader(k, programTypeMap[k], v)
+	for k, v := range spec.Shaders {
+		source := core.GetResourceManager().ProgramData(v)
+		prog.shaders[k] = newShader(k, programTypeMap[k], source)
+	}
+
+	// set ubo bindings
+	for k, v := range spec.UniformBufferBindings {
+		prog.uniformBufferBindings[k] = v
 	}
 
 	// set finalizer (hooks into gl to cleanup)
@@ -92,48 +118,117 @@ func (r *RenderSystem) NewProgram(name string, shaders map[string][]byte) core.P
 		}
 	}
 
-	// hard-bind scene block and node block(this is shared across all programs)
-	sceneBlockIndex := gl.GetUniformBlockIndex(prog.id, gl.Str("sceneBlock"+"\x00"))
-	gl.UniformBlockBinding(prog.id, sceneBlockIndex, 0)
+	// populate uniform name map
+	prog.extractUniformNames()
 
-	nodeBlockIndex := gl.GetUniformBlockIndex(prog.id, gl.Str("nodeBlock"+"\x00"))
-	gl.UniformBlockBinding(prog.id, nodeBlockIndex, 1)
+	// populate uniform block index map
+	prog.extractUniformBlockIndexes()
 
-	// debug available uniforms
-	var uniformcount int32
-	gl.GetProgramiv(prog.id, gl.ACTIVE_UNIFORMS, &uniformcount)
-	for i := uint32(0); i < uint32(uniformcount); i++ {
-		// prepare content
+	// bind uniform buffers
+	for name, bindLocation := range spec.UniformBufferBindings {
+		if index, ok := prog.uniformBlockIndexes[name]; ok {
+			gl.UniformBlockBinding(prog.id, index, bindLocation)
+		}
+	}
+
+	return &prog
+}
+
+func (p *Program) extractUniformNames() {
+	var uniformCount int32
+	gl.GetProgramiv(p.id, gl.ACTIVE_UNIFORMS, &uniformCount)
+
+	for i := uint32(0); i < uint32(uniformCount); i++ {
 		uniformName := strings.Repeat("\x00", int(128)+1)
 		var uniformLen int32
 		var uniformSize int32
 		var uniformType uint32
 
 		// extract locations and name
-		gl.GetActiveUniform(prog.id, i, 128, &uniformLen, &uniformSize, &uniformType, gl.Str(uniformName))
+		gl.GetActiveUniform(p.id, i, 128, &uniformLen, &uniformSize, &uniformType, gl.Str(uniformName))
 
 		// extract location
-		location := gl.GetUniformLocation(prog.id, gl.Str(uniformName))
+		location := gl.GetUniformLocation(p.id, gl.Str(uniformName))
 
-		// save into location cache
+		// save into location map
 		goUniformname := gl.GoStr(gl.Str(uniformName))
-		prog.uniformLocations[goUniformname] = location
-		//glog.Infof("Uniform: %s Size: %d Type: %d Slot: %d\n", goUniformname, uniformSize, uniformType, location)
+		p.uniformLocations[goUniformname] = location
 	}
-	//glog.Info(prog.uniformLocations)
+}
 
-	return &prog
+func (p *Program) extractUniformBlockIndexes() {
+	var blockCount int32
+	gl.GetProgramiv(p.id, gl.ACTIVE_UNIFORM_BLOCKS, &blockCount)
+	for i := uint32(0); i < uint32(blockCount); i++ {
+		// extract name length
+		var nameLen int32
+		gl.GetActiveUniformBlockiv(p.id, i, gl.UNIFORM_BLOCK_NAME_LENGTH, &nameLen)
+		uniformName := strings.Repeat("\x00", int(nameLen))
+
+		// extract name
+		gl.GetActiveUniformBlockName(p.id, i, nameLen, nil, gl.Str(uniformName))
+
+		// extract location
+		location := gl.GetUniformBlockIndex(p.id, gl.Str(uniformName))
+		p.uniformBlockIndexes[gl.GoStr(gl.Str(uniformName))] = location
+	}
+}
+
+func (p *Program) bind() {
+	gl.UseProgram(p.id)
+}
+
+func (p *Program) setUniform(name string, u *Uniform) {
+	if u.value == nil {
+		return
+	}
+
+	uloc, found := p.uniformLocations[name]
+	if !found {
+		return
+	}
+
+	switch uval := u.Value().(type) {
+	case mgl32.Mat4:
+		gl.UniformMatrix4fv(uloc, 1, false, &uval[0])
+	case mgl64.Mat4:
+		newval := core.Mat4DoubleToFloat(uval)
+		gl.UniformMatrix4fv(uloc, 1, false, &newval[0])
+	case mgl64.Vec4:
+		newval := core.Vec4DoubleToFloat(uval)
+		gl.Uniform4fv(uloc, 1, &newval[0])
+	case mgl64.Vec3:
+		newval := core.Vec3DoubleToFloat(uval)
+		gl.Uniform3fv(uloc, 1, &newval[0])
+	case mgl64.Vec2:
+		newval := core.Vec2DoubleToFloat(uval)
+		gl.Uniform2fv(uloc, 1, &newval[0])
+	case []float32:
+		gl.Uniform1fv(uloc, int32(len(uval)), &uval[0])
+	case []mgl32.Vec2:
+		newval := make([]float32, len(uval)*2)
+		for i := 0; i < len(uval); i++ {
+			newval[i*2+0] = uval[i].X()
+			newval[i*2+1] = uval[i].Y()
+		}
+		gl.Uniform2fv(uloc, int32(len(uval)), &newval[0])
+	case int:
+		gl.Uniform1i(uloc, int32(uval))
+	case float32:
+		gl.Uniform1f(uloc, uval)
+	case float64:
+		gl.Uniform1f(uloc, float32(uval))
+	default:
+		glog.Fatalf("UNSUPPORTED -- Uniform: %s Type: %s\n", name, reflect.TypeOf(u.Value()))
+	}
+}
+
+func (p *Program) setUniformBufferByName(name string, ub *UniformBuffer) {
+	p.uniformBufferBindingIDs[name] = ub.id
+	gl.BindBufferBase(gl.UNIFORM_BUFFER, p.uniformBufferBindings[name], ub.id)
 }
 
 // Name implements the core.Program interface
 func (p *Program) Name() string {
 	return p.name
-}
-
-func bindProgram(p *Program) {
-	gl.UseProgram(p.id)
-}
-
-func unbindProgram() {
-	gl.UseProgram(0)
 }

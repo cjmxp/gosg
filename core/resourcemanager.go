@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"log"
 
 	"github.com/golang/glog"
@@ -81,7 +80,6 @@ func (r *ResourceManager) Model(name string) *Node {
 		resource := r.system.Model(name)
 		r.models[name] = LoadModel(name, resource, false)
 	}
-
 	return r.models[name].Copy()
 }
 
@@ -91,7 +89,6 @@ func (r *ResourceManager) InstancedModel(name string) *Node {
 		resource := r.system.Model(name)
 		r.models[name] = LoadModel(name, resource, true)
 	}
-
 	return r.models[name].Copy()
 }
 
@@ -99,21 +96,15 @@ func (r *ResourceManager) InstancedModel(name string) *Node {
 func (r *ResourceManager) Program(name string) Program {
 	if r.programs[name] == nil {
 		resource := r.system.Program(name)
-
-		// we know programs are json files with key=>subresourcename entries
-		var subresourcenames map[string]string
-		if err := json.Unmarshal(resource, &subresourcenames); err != nil {
-			glog.Fatal("Cannot parse program: ", err)
-		}
-
-		var subresources = make(map[string][]byte)
-		for k, v := range subresourcenames {
-			subresources[k] = r.system.ProgramData(v)
-		}
-
-		r.programs[name] = renderSystem.NewProgram(name, subresources)
+		r.programs[name] = renderSystem.NewProgram(name, resource)
 	}
 	return r.programs[name]
+}
+
+// ProgramData returns source file contents for a given program or subprogram
+// This is meant to be used by rendersystem implementations to load subresources for a program spec
+func (r *ResourceManager) ProgramData(name string) []byte {
+	return r.system.ProgramData(name)
 }
 
 // Texture returns a Texture.

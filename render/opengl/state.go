@@ -10,7 +10,7 @@ var (
 	currentState = core.NewState()
 )
 
-func bindRenderState(s core.State, force bool) {
+func bindRenderState(ub core.UniformBuffer, s core.State, force bool) {
 	// apply depth test function
 	if s.Depth.Enabled != currentState.Depth.Enabled || force {
 		if s.Depth.Enabled {
@@ -106,19 +106,25 @@ func bindRenderState(s core.State, force bool) {
 	}
 
 	if s.Program() != nil {
+		glProgram := s.Program().(*Program)
+
 		if s.Program() != currentState.Program() || force {
-			// different program, bind it and all uniforms
-			bindProgram(s.Program().(*Program))
-			for name, uniform := range s.Uniforms() {
-				bindUniform(name, s.Program().(*Program), uniform)
-			}
-		} else {
-			// same program, bind only different uniforms
-			for name, uniform := range s.Uniforms() {
-				if uniform.Value() != currentState.Uniform(name).Value() {
-					bindUniform(name, s.Program().(*Program), uniform)
-				}
-			}
+			glProgram.bind()
+		}
+
+		// bind this node's uniforms
+		for name, uniform := range s.Uniforms() {
+			glProgram.setUniform(name, uniform.(*Uniform))
+		}
+
+		// global uniform buffer
+		if ub != nil {
+			glProgram.setUniformBufferByName("cameraConstants", ub.(*UniformBuffer))
+		}
+
+		// and node uniform buffers
+		for name, uniformBuffer := range s.UniformBuffers() {
+			glProgram.setUniformBufferByName(name, uniformBuffer.(*UniformBuffer))
 		}
 
 		// activate textures
