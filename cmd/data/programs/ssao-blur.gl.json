@@ -1,4 +1,0 @@
-{
-    "vertex": "screenquad.vs.glsl",
-    "fragment": "ssao-blur.fs.glsl"
-}

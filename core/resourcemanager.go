@@ -3,7 +3,9 @@ package core
 import (
 	"log"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/jsonpb"
 )
 
 // ResourceSystem is an interface which wraps all resource management logic.
@@ -23,6 +25,9 @@ type ResourceSystem interface {
 	// Program returns a byte array representing a program.
 	Program(string) []byte
 
+	// Material returns a byte array representing a material
+	Material(string) []byte
+
 	// ProgramData returns a byte array representing program data.
 	ProgramData(string) []byte
 }
@@ -31,6 +36,7 @@ type ResourceSystem interface {
 type ResourceManager struct {
 	system          ResourceSystem
 	programs        map[string]Program
+	materials       map[string]*protos.Material
 	models          map[string]*Node
 	instancedModels map[string]*Node
 	textures        map[string]Texture
@@ -43,6 +49,7 @@ var (
 func init() {
 	resourceManager = &ResourceManager{
 		programs:        make(map[string]Program),
+		materials:       make(map[string]*protos.Material),
 		models:          make(map[string]*Node),
 		instancedModels: make(map[string]*Node),
 		textures:        make(map[string]Texture),
@@ -78,16 +85,7 @@ func (r *ResourceManager) SetSystem(s ResourceSystem) {
 func (r *ResourceManager) Model(name string) *Node {
 	if r.models[name] == nil {
 		resource := r.system.Model(name)
-		r.models[name] = LoadModel(name, resource, false)
-	}
-	return r.models[name].Copy()
-}
-
-// InstancedModel returns a Model from Model(), configured with instanced meshes.
-func (r *ResourceManager) InstancedModel(name string) *Node {
-	if r.models[name] == nil {
-		resource := r.system.Model(name)
-		r.models[name] = LoadModel(name, resource, true)
+		r.models[name] = LoadModel(name, resource)
 	}
 	return r.models[name].Copy()
 }
@@ -99,6 +97,20 @@ func (r *ResourceManager) Program(name string) Program {
 		r.programs[name] = renderSystem.NewProgram(name, resource)
 	}
 	return r.programs[name]
+}
+
+// Material returns a material.
+func (r *ResourceManager) Material(name string) *protos.Material {
+	if r.materials[name] == nil {
+		resource := r.system.Material(name)
+		var material protos.Material
+		if err := jsonpb.UnmarshalString(string(resource), &material); err != nil {
+			glog.Fatal("Cannot unmarshal material: ", err)
+		}
+		material.Name = name
+		r.materials[name] = &material
+	}
+	return r.materials[name]
 }
 
 // ProgramData returns source file contents for a given program or subprogram

@@ -25,17 +25,12 @@ type Mesh struct {
 	vao           uint32
 	dirty         bool
 	indexcount    int32
+	instanceCount int32
 	name          string
 	buffers       map[bufferType]uint32
 	bounds        *core.AABB
 	primitiveType uint32
 	compileList   []func()
-}
-
-// InstancedMesh implements the core.InstancedMesh interface
-type InstancedMesh struct {
-	*Mesh
-	instanceCount int32
 }
 
 // IMGUIMesh implements the core.IMGUIMesh interface
@@ -71,14 +66,6 @@ func (r *RenderSystem) NewMesh() core.Mesh {
 // NewIMGUIMesh implements the core.RenderSystem interface
 func (r *RenderSystem) NewIMGUIMesh() core.IMGUIMesh {
 	return &IMGUIMesh{r.NewMesh().(*Mesh)}
-}
-
-// NewInstancedMesh implements the core.RenderSystem interface
-func (r *RenderSystem) NewInstancedMesh(m core.Mesh) core.InstancedMesh {
-	if m != nil {
-		return &InstancedMesh{m.(*Mesh), 0}
-	}
-	return &InstancedMesh{r.NewMesh().(*Mesh), 0}
 }
 
 func (m *Mesh) compile() {
@@ -299,22 +286,19 @@ func (m *Mesh) SetIndices(indices []uint16) {
 }
 
 // Draw implements the core.Mesh interface
-func (m *Mesh) Draw(ub core.UniformBuffer, st *core.State) {
+func (m *Mesh) Draw() {
 	if m.dirty {
 		m.compile()
 	}
 
-	bindRenderState(ub, *st, false)
-
 	gl.BindVertexArray(m.vao)
-	gl.DrawElements(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil)
+	gl.DrawElementsInstanced(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount)
+	//gl.DrawElementsInstancedBaseVertexBaseInstance(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount, 0, 0)
 	gl.BindVertexArray(0)
 }
 
 // Draw implements the core.IMGUIMesh interface
-func (m *IMGUIMesh) Draw(ub core.UniformBuffer, st *core.State) {
-	bindRenderState(ub, *st, false)
-
+func (m *IMGUIMesh) Draw() {
 	imguiSystem := core.GetIMGUISystem()
 	drawData := imguiSystem.GetDrawData()
 
@@ -369,65 +353,57 @@ func (m *IMGUIMesh) Draw(ub core.UniformBuffer, st *core.State) {
 	gl.BindVertexArray(0)
 }
 
+// Lt implements the core.Mesh interface
+func (m *Mesh) Lt(other core.Mesh) bool {
+	return m.vao < other.(*Mesh).vao
+}
+
+// Gt implements the core.Mesh interface
+func (m *Mesh) Gt(other core.Mesh) bool {
+	return m.vao > other.(*Mesh).vao
+}
+
 // SetInstanceCount implements the core.InstancedMesh interface
-func (i *InstancedMesh) SetInstanceCount(count int) {
-	i.instanceCount = int32(count)
+func (m *Mesh) SetInstanceCount(count int) {
+	m.instanceCount = int32(count)
 }
 
 // SetModelMatrices implements the core.InstancedMesh interface
-func (i *InstancedMesh) SetModelMatrices(matrices []float32) {
-	i.compileList = append(i.compileList, func() {
-		gl.BindVertexArray(i.vao)
+func (m *Mesh) SetModelMatrices(matrices []float32) {
+	m.compileList = append(m.compileList, func() {
 
 		buf := uint32(0)
 
-		if i.buffers[modelMatrixBuffer] == 0 {
+		if m.buffers[modelMatrixBuffer] == 0 {
+			gl.BindVertexArray(m.vao)
 			gl.GenBuffers(1, &buf)
-			i.buffers[modelMatrixBuffer] = buf
+			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
+
+			gl.EnableVertexAttribArray(5)
+			gl.VertexAttribPointer(5, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(0*16))
+			gl.VertexAttribDivisor(5, 1)
+
+			gl.EnableVertexAttribArray(6)
+			gl.VertexAttribPointer(6, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(1*16))
+			gl.VertexAttribDivisor(6, 1)
+
+			gl.EnableVertexAttribArray(7)
+			gl.VertexAttribPointer(7, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(2*16))
+			gl.VertexAttribDivisor(7, 1)
+
+			gl.EnableVertexAttribArray(8)
+			gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
+			gl.VertexAttribDivisor(8, 1)
+
+			m.buffers[modelMatrixBuffer] = buf
 		} else {
-			buf = i.buffers[modelMatrixBuffer]
-			gl.DeleteBuffers(1, &buf)
-			gl.GenBuffers(1, &buf)
-			i.buffers[modelMatrixBuffer] = buf
+			buf = m.buffers[modelMatrixBuffer]
+			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 		}
 
 		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(matrices), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(5)
-		gl.VertexAttribPointer(5, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(0*16))
-		gl.VertexAttribDivisor(5, 1)
-
-		gl.EnableVertexAttribArray(6)
-		gl.VertexAttribPointer(6, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(1*16))
-		gl.VertexAttribDivisor(6, 1)
-
-		gl.EnableVertexAttribArray(7)
-		gl.VertexAttribPointer(7, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(2*16))
-		gl.VertexAttribDivisor(7, 1)
-
-		gl.EnableVertexAttribArray(8)
-		gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
-		gl.VertexAttribDivisor(8, 1)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
+		gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(&matrices[0]), gl.STATIC_DRAW)
 	})
 
-	i.dirty = true
-}
-
-// Draw implements the core.InstancedMesh interface
-func (i *InstancedMesh) Draw(ub core.UniformBuffer, st *core.State) {
-	// we compile on the fly with opengl, sucks
-	if i.dirty {
-		i.compile()
-	}
-
-	bindRenderState(ub, *st, false)
-
-	gl.BindVertexArray(i.vao)
-	gl.DrawElementsInstanced(i.primitiveType, i.indexcount, gl.UNSIGNED_SHORT, nil, i.instanceCount)
-	gl.BindVertexArray(0)
+	m.dirty = true
 }

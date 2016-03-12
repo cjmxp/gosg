@@ -79,3 +79,13 @@ func (ub *UniformBuffer) Set(data unsafe.Pointer, dataLen int) {
 	gl.BindBuffer(gl.UNIFORM_BUFFER, ub.id)
 	gl.BufferData(gl.UNIFORM_BUFFER, dataLen, data, gl.DYNAMIC_DRAW)
 }
+
+// Lt implements the core.UniformBuffer interface
+func (ub *UniformBuffer) Lt(other core.UniformBuffer) bool {
+	return ub.id < other.(*UniformBuffer).id
+}
+
+// Gt implements the core.UniformBuffer interface
+func (ub *UniformBuffer) Gt(other core.UniformBuffer) bool {
+	return ub.id > other.(*UniformBuffer).id
+}

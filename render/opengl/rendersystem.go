@@ -31,7 +31,7 @@ func New() *RenderSystem {
 // Start implements the core.RenderSystem interface
 func (r *RenderSystem) Start() {
 	// set the default state
-	bindRenderState(nil, currentState, true)
+	bindMaterialState(nil, currentState, true)
 
 	// create timers
 	gl.GenQueries(1, &r.timerQuery)
@@ -87,7 +87,7 @@ func (r *RenderSystem) Stop() {
 }
 
 // PrepareViewport implements the core.RenderSystem interface
-func (r *RenderSystem) PrepareViewport(c *core.Camera) {
+func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
 	// bind specific render target
 	if c.RenderTarget() != nil {
 		c.RenderTarget().(*RenderTarget).bind()
@@ -99,29 +99,79 @@ func (r *RenderSystem) PrepareViewport(c *core.Camera) {
 	v := c.Viewport()
 	gl.Viewport(int32(v[0]), int32(v[1]), int32(v[2]), int32(v[3]))
 
-	cc := c.ClearColor()
-	gl.ClearColor(cc[0], cc[1], cc[2], cc[3])
-
 	var clearargs uint32
 	cm := c.ClearMode()
 
 	if cm&core.ClearColor > 0 {
 		clearargs = clearargs | gl.COLOR_BUFFER_BIT
+		cc := c.ClearColor()
+		gl.ClearColor(cc[0], cc[1], cc[2], cc[3])
 	}
 
 	if cm&core.ClearDepth > 0 {
 		clearargs = clearargs | gl.DEPTH_BUFFER_BIT
+		cd := c.ClearDepth()
+		gl.ClearDepth(cd)
 	}
 
 	if clearargs != 0 {
-		// need to activate in order for clear to succeed
-		clearState := currentState
-		clearState.SetProgram(nil)
-		clearState.Depth.Mask = true
-		clearState.Color.Mask = true
-		clearState.Blend.Enabled = false
-		clearState.Scissor.Enabled = false
-		bindRenderState(nil, clearState, true)
+		bindMaterialState(nil, "clear", true)
 		gl.Clear(clearargs)
 	}
+}
+
+// ExecuteRenderPlan implements the core.RenderSystem interface
+func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
+	for _, stage := range p.Stages {
+		r.PrepareRenderTarget(stage.Camera)
+
+		for _, pass := range stage.Passes {
+			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.MaterialName, false)
+
+			var lastBatchIndex int
+			for i := range pass.Nodes {
+				if !breaksBatch(program, pass.Nodes[i].MaterialData()) || i == 0 {
+					continue
+				}
+
+				// need to break batch, get lastBatchIndex, get current index, slice node list
+				batch := pass.Nodes[lastBatchIndex:i]
+
+				// renderbatch
+				r.renderBatch(program, batch)
+
+				// move head
+				lastBatchIndex = i
+			}
+
+			// render last batch
+			batch := pass.Nodes[lastBatchIndex:len(pass.Nodes)]
+			r.renderBatch(program, batch)
+		}
+	}
+}
+
+func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
+	if len(nodes) == 0 {
+		return
+	}
+
+	// bind the textures for this batch
+	bindTextures(program, nodes[0].MaterialData())
+
+	//fixme:  build uniform buffer
+	//bindUniforms(program, nodes[0].MaterialData())
+
+	// build transform attribute buffer
+	mesh := nodes[0].Mesh()
+	matrixBuckets := make([]float32, 0)
+	for _, n := range nodes {
+		transform64 := n.WorldTransform()
+		transform32 := core.Mat4DoubleToFloat(transform64)
+		matrixBuckets = append(matrixBuckets, transform32[0:16]...)
+	}
+
+	mesh.SetInstanceCount(len(nodes))
+	mesh.SetModelMatrices(matrixBuckets)
+	mesh.Draw()
 }

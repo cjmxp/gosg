@@ -32,7 +32,7 @@ type ModelMesh struct {
 
 // LoadModel parses model data from a raw resource and returns a node ready
 // to insert into the screnegraph
-func LoadModel(name string, res []byte, instanced bool) *Node {
+func LoadModel(name string, res []byte) *Node {
 	buffer := bytes.NewBuffer(res)
 	decoder := gob.NewDecoder(buffer)
 
@@ -46,25 +46,17 @@ func LoadModel(name string, res []byte, instanced bool) *Node {
 	parentNode := NewNode(basename)
 	for i := 0; i < len(model.Meshes); i++ {
 		node := NewNode(basename + fmt.Sprintf("-%d", i))
-
 		// get program, support selecting program based on material property in modelfile
-		//extension := filepath.Ext(basename)
-		//basename_noext := basename[0 : len(basename)-len(extension)]
-		if instanced {
-			node.State().SetProgram(resourceManager.Program("ubershader-instanced"))
-		} else {
-			node.State().SetProgram(resourceManager.Program("ubershader"))
-		}
+		// fixme: we don't want this hardcoded, use model file
+		node.materialName = "uber-opaque-prez"
 
 		// get textures
 		if len(model.Meshes[i].DiffuseTexture) > 0 {
-			node.State().SetTexture(0, renderSystem.NewTexture(model.Meshes[i].DiffuseTexture))
-			node.State().Uniform("diffuseTex").Set(0)
+			node.MaterialData().SetTexture("diffuseTex", renderSystem.NewTexture(model.Meshes[i].DiffuseTexture))
 		}
 
 		if len(model.Meshes[i].NormalTexture) > 0 {
-			node.State().SetTexture(1, renderSystem.NewTexture(model.Meshes[i].NormalTexture))
-			node.State().Uniform("normalTex").Set(1)
+			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalTexture))
 		}
 
 		// set mesh data
@@ -77,10 +69,6 @@ func LoadModel(name string, res []byte, instanced bool) *Node {
 		mesh.SetTextureCoordinates(3, model.Meshes[i].TextureCoords)
 		mesh.SetIndices(model.Meshes[i].Indices)
 		mesh.SetPrimitiveType(PrimitiveTypeTriangles)
-
-		if instanced {
-			mesh = renderSystem.NewInstancedMesh(mesh)
-		}
 
 		node.SetMesh(mesh)
 		parentNode.AddChild(node)

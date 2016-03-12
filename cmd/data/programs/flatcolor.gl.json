@@ -1,7 +1,7 @@
 {
   "shaders": {
-    "vertex": "ubershader-instanced.vs.glsl",
-    "fragment": "ubershader.fs.glsl"
+    "vertex": "flatcolor.vs.glsl",
+    "fragment": "flatcolor.fs.glsl"
   },
   "uniformBufferBindings": {
     "cameraConstants": 0,

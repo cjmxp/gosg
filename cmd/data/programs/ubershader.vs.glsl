@@ -9,7 +9,7 @@ struct light {
     vec4 specular;
 };
 
-layout (std140) uniform sceneBlock {
+layout (std140) uniform cameraConstants {
     mat4 vMatrix;
     mat4 pMatrix;
     mat4 vpMatrix;
@@ -23,7 +23,7 @@ layout (location = 1) in vec3 normal_in;
 layout (location = 2) in vec3 tangent_in;
 layout (location = 3) in vec3 bitangent_in;
 layout (location = 4) in vec3 tcoords0_in;
-uniform mat4 mMatrix;
+layout (location = 5) in mat4 mMatrix;
 
 out vec3 position;
 out vec3 cameraPosition;

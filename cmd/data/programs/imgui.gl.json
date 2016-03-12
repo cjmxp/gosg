@@ -6,5 +6,8 @@
   "uniformBufferBindings": {
     "cameraConstants": 0,
     "nodeBlock": 1
+  },
+  "samplerBindings:": {
+    "diffuseTex": 0
   }
 }

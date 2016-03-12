@@ -139,34 +139,13 @@ func GetIMGUISystem() IMGUISystem {
 	return imguiSystem
 }
 
-// NewImguiState returns a raster state appropriate to draw IMGUI widgets.
-func NewImguiState() State {
-	st := NewState()
-
-	st.Depth.Enabled = false
-
-	st.Color.Mask = true
-
-	st.Blend.Enabled = true
-	st.Blend.SrcMode = BlendSrcAlpha
-	st.Blend.DstMode = BlendOneMinusSrcAlpha
-	st.Blend.Equation = BlendFuncAdd
-
-	st.Cull.Enabled = false
-
-	st.Scissor.Enabled = true
-
-	st.SetProgram(resourceManager.Program("imgui"))
-
-	return st
-}
-
 func newImguiNode(name string) *Node {
 	node := NewNode(name)
 	node.lightExtractor = nil
 	node.physicsComponent = nil
 	node.SetCullComponent(new(AlwaysPassCullComponent))
-	node.state = NewImguiState()
+	node.materialName = "imgui"
+	node.materialData = NewMaterialData()
 	mesh := renderSystem.NewIMGUIMesh()
 	mesh.SetPrimitiveType(PrimitiveTypeTriangles)
 	node.SetMesh(mesh)
@@ -188,13 +167,11 @@ func NewIMGUIScene(name string, inputComponent InputComponent) *Scene {
 	camera.SetVerticalFieldOfView(60.0)
 	camera.SetClipDistance(mgl64.Vec2{0.0, 1.0})
 	camera.SetRenderOrder(0)
-	camera.SetRenderTechnique(IMGUIRenderTechnique)
 	camera.Reshape(mgl32.Vec2{size.X(), size.Y()})
 
 	// node root
 	node := newImguiNode("MainMenu")
 	node.SetInputComponent(inputComponent)
-	node.State().Uniform("pMatrix").Set(camera.ProjectionMatrix())
 
 	// set camera's scene
 	camera.SetScene(node)

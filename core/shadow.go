@@ -13,7 +13,7 @@ type Shadower interface {
 	RenderTarget() RenderTarget
 
 	// Render calls the shadower render implementation by assing a light, a `SceneBlock` and a list of nodes.
-	Render(light *Light, nodes []*Node)
+	RenderStage(light *Light, nodes []*Node) RenderStage
 }
 
 // ShadowMap is a utility implementation of the Shadower interface which renders shadows by using a shadow map.
@@ -40,7 +40,7 @@ func (s *ShadowMap) RenderTarget() RenderTarget {
 }
 
 // Render implements the Shadower interface
-func (s *ShadowMap) Render(light *Light, nodes []*Node) {
+func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 	/*
 		1-find all objects that are inside the current camera frustum
 		2-find minimal aa bounding box that encloses them all
@@ -85,22 +85,22 @@ func (s *ShadowMap) Render(light *Light, nodes []*Node) {
 		mgl64.Vec4{0.5, 0.5, 0.5, 1.0}).Mul4(vpmatrix)
 	light.Block.VPMatrix = Mat4DoubleToFloat(biasvpmatrix)
 
-	s.camera.PrepareViewport()
-	s.camera.constants.SetMatrices(s.camera.projectionMatrix, s.camera.viewMatrix)
+	// set camera constants
+	s.camera.constants.SetData(s.camera.projectionMatrix, s.camera.viewMatrix, nil)
 
-	meshBuckets := MeshBuckets(nodes)
-	for mesh, bucketNodes := range meshBuckets {
-		if _, ok := mesh.(InstancedMesh); ok {
-			// hack
-			bucketNodes[0].State().SetTexture(2, s.camera.renderTarget.DepthTexture())
-			bucketNodes[0].State().Uniform("shadowTex").Set(2)
-			RenderFnZPassInstanced(s.camera.constants.buffer, []*Node{bucketNodes[0]})
-		} else {
-			for i := range bucketNodes {
-				bucketNodes[i].State().SetTexture(2, s.camera.renderTarget.DepthTexture())
-				bucketNodes[i].State().Uniform("shadowTex").Set(2)
-			}
-			RenderFnZPass(s.camera.constants.buffer, bucketNodes)
-		}
+	// we want to return a renderstage with a two passes, instanced and non-instanced
+	out.Camera = s.camera
+	out.Name = "ShadowStage"
+	out.Passes = append(out.Passes, RenderPass{
+		MaterialName: "zpass",
+		Name:         "ShadowPass",
+		Nodes:        nodes,
+	})
+
+	// for now, hack the shadow texture sampler
+	for _, node := range nodes {
+		node.materialData.SetTexture("shadowTex", s.camera.renderTarget.DepthTexture())
 	}
+
+	return
 }

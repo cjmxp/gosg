@@ -6,4 +6,10 @@ import "unsafe"
 // will be accessed by name handle via the resource system or abstracted in opaque material definitions.
 type Texture interface {
 	Handle() unsafe.Pointer
+
+	// Lt is used for sorting
+	Lt(Texture) bool
+
+	// Gt
+	Gt(Texture) bool
 }

@@ -14,23 +14,26 @@ type ProjectionType uint8
 
 // ClearMode is used to express the type of framebuffer clearing which will be executed
 // before the rendering logic is called.
-type ClearMode uint8
+type RenderTargetClearMode uint8
 
 const (
 	// ClearColor is used to signal whether a framebuffer's color buffer should be cleared.
-	ClearColor ClearMode = 1 << 0
+	ClearColor RenderTargetClearMode = 1 << 0
 
 	// ClearDepth is used to signal whether a framebuffer's color buffer should be cleared.
-	ClearDepth ClearMode = 1 << 1
+	ClearDepth RenderTargetClearMode = 1 << 1
 )
 
 const (
 	// PerspectiveProjection represents a perspective projection.
-	PerspectiveProjection ProjectionType = 1 << 0
+	PerspectiveProjection ProjectionType = iota
 
 	// OrthographicProjection represents an orthographic projection.
-	OrthographicProjection ProjectionType = 1 << 1
+	OrthographicProjection
 )
+
+// RenderStageFn is a function which returns a stage of a renderplan pipeline
+type RenderStageFn func(c *Camera, n []*Node) RenderStage
 
 // A Camera represents a scenegraph camera object. It wraps data which holds
 // its transforms (projection and view matrices), clear information, whether
@@ -42,8 +45,8 @@ type Camera struct {
 	autoReshape      bool
 	projectionType   ProjectionType
 	clearColor       mgl32.Vec4
-	clearDepth       float32
-	clearMode        ClearMode
+	clearDepth       float64
+	clearMode        RenderTargetClearMode
 	node             *Node
 	scene            *Node
 	viewMatrix       mgl64.Mat4
@@ -56,7 +59,7 @@ type Camera struct {
 	renderTarget     RenderTarget
 	frustum          [6]mgl64.Vec4
 	constants        *CameraConstants
-	renderTechnique  RenderFn
+	renderTechnique  RenderStageFn
 }
 
 // CamerasByRenderOrder is used to sort cameras by the render order field.
@@ -91,7 +94,7 @@ func NewCamera(name string, projType ProjectionType) *Camera {
 	cam := Camera{}
 	cam.name = name
 	cam.clearColor = mgl32.Vec4{0.0, 0.0, 0.0, 0.0}
-	cam.clearDepth = 0.0
+	cam.clearDepth = 1.0
 	cam.clearMode = ClearColor | ClearDepth
 	cam.SetProjectionType(projType)
 	cam.node = NewNode(name)
@@ -156,8 +159,13 @@ func (c *Camera) ClearColor() mgl32.Vec4 {
 	return c.clearColor
 }
 
+// ClearDepth returns the camera's clear depth.
+func (c *Camera) ClearDepth() float64 {
+	return c.clearDepth
+}
+
 // ClearMode returns the camera's clear mode.
-func (c *Camera) ClearMode() ClearMode {
+func (c *Camera) ClearMode() RenderTargetClearMode {
 	return c.clearMode
 }
 
@@ -242,12 +250,12 @@ func (c *Camera) SetClearColor(cc mgl32.Vec4) {
 }
 
 // SetClearDepth sets the camera's clear depth.
-func (c *Camera) SetClearDepth(d float32) {
+func (c *Camera) SetClearDepth(d float64) {
 	c.clearDepth = d
 }
 
 // SetClearMode sets the camera's clear mode.
-func (c *Camera) SetClearMode(cm ClearMode) {
+func (c *Camera) SetClearMode(cm RenderTargetClearMode) {
 	c.clearMode = cm
 }
 
@@ -277,25 +285,8 @@ func (c *Camera) SetRenderOrder(o uint8) {
 }
 
 // SetRenderTechnique sets the camera's render technique.
-func (c *Camera) SetRenderTechnique(r RenderFn) {
+func (c *Camera) SetRenderTechnique(r RenderStageFn) {
 	c.renderTechnique = r
-}
-
-// RenderTechnique returns the camera's render technique.
-func (c *Camera) RenderTechnique() RenderFn {
-	return c.renderTechnique
-}
-
-// PrepareViewport prepares the camera for rendering. It resets the viewport and clears
-// the rendertarget buffers.
-func (c *Camera) PrepareViewport() {
-	renderSystem.PrepareViewport(c)
-}
-
-// Render calls the camera's render technique function.
-func (c *Camera) Render(nodes []*Node) {
-	c.constants.SetMatrices(c.ProjectionMatrix(), c.ViewMatrix())
-	c.renderTechnique(c.constants.buffer, nodes)
 }
 
 type innerConstants struct {
@@ -323,26 +314,25 @@ func NewCameraConstants() *CameraConstants {
 	return &CameraConstants{innerConstants{}, renderSystem.NewUniformBuffer()}
 }
 
-// SetMatrices implements the SceneBlock interface
-func (sb *CameraConstants) SetMatrices(pMatrix, vMatrix mgl64.Mat4) {
+// SetMatrices sets matrices and light information for the entire scene
+func (sb *CameraConstants) SetData(pMatrix, vMatrix mgl64.Mat4, l []*Light) {
+	// matrices
 	sb.inner.ViewMatrix = Mat4DoubleToFloat(vMatrix)
 	sb.inner.ProjectionMatrix = Mat4DoubleToFloat(pMatrix)
 	sb.inner.ViewProjectionMatrix = Mat4DoubleToFloat(pMatrix.Mul4(vMatrix))
 
-	// copy to buffer
-	inner := sb.inner
-	sb.buffer.Set(unsafe.Pointer(&inner), sceneBlockLen)
-}
-
-// SetLights implements the SceneBlock interface
-func (sb *CameraConstants) SetLights(l []*Light) {
+	// lights
 	sb.inner.LightCount = mgl32.Vec4{0.0, 0.0, 0.0, 0.0}
-
-	// copy lights
 	for i := 0; i < len(l) && i < len(sb.inner.LightBlocks); i++ {
 		sb.inner.LightCount = sb.inner.LightCount.Add(mgl32.Vec4{1.0, 1.0, 1.0, 1.0})
 		sb.inner.LightBlocks[i] = l[i].Block
 	}
+
+	// copy to buffer
+	inner := sb.inner
+
+	// set the constant buffer pointer and length
+	sb.buffer.Set(unsafe.Pointer(&inner), sceneBlockLen)
 }
 
 // UniformBuffer returns the camera constants uniform buffer

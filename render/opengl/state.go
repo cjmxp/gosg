@@ -3,138 +3,154 @@ package opengl
 import (
 	"github.com/fcvarela/gosg/core"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 var (
-	currentState = core.NewState()
+	currentState        = "clear"
+	textureUnitBindings = map[uint32]uint32{}
 )
 
-func bindRenderState(ub core.UniformBuffer, s core.State, force bool) {
-	// apply depth test function
-	if s.Depth.Enabled != currentState.Depth.Enabled || force {
-		if s.Depth.Enabled {
+func bindMaterialState(ub core.UniformBuffer, materialName string, force bool) *Program {
+	s := core.GetResourceManager().Material(materialName)
+	c := core.GetResourceManager().Material(currentState)
+
+	if s.DepthTest != c.DepthTest || force {
+		if s.DepthTest {
 			gl.Enable(gl.DEPTH_TEST)
 		} else {
 			gl.Disable(gl.DEPTH_TEST)
 		}
 	}
 
-	if s.Depth.Func != currentState.Depth.Func || force {
-		switch s.Depth.Func {
-		case core.DepthLess:
+	if s.DepthFunc != c.DepthFunc || force {
+		switch s.DepthFunc {
+		case protos.Material_DEPTH_LESS:
 			gl.DepthFunc(gl.LESS)
-		case core.DepthLessEqual:
+		case protos.Material_DEPTH_LESS_EQUAL:
 			gl.DepthFunc(gl.LEQUAL)
-		case core.DepthEqual:
+		case protos.Material_DEPTH_EQUAL:
 			gl.DepthFunc(gl.EQUAL)
 		}
 	}
 
-	if s.Scissor.Enabled != currentState.Scissor.Enabled || force {
-		if s.Scissor.Enabled {
+	if s.ScissorTest != c.ScissorTest || force {
+		if s.ScissorTest {
 			gl.Enable(gl.SCISSOR_TEST)
 		} else {
 			gl.Disable(gl.SCISSOR_TEST)
 		}
 	}
 
-	if s.Blend.Enabled != currentState.Blend.Enabled || force {
-		if s.Blend.Enabled {
+	if s.Blending != c.Blending || force {
+		if s.Blending {
 			gl.Enable(gl.BLEND)
 		} else {
 			gl.Disable(gl.BLEND)
 		}
 	}
 
-	if s.Blend.SrcMode != currentState.Blend.SrcMode || s.Blend.DstMode != currentState.Blend.DstMode || force {
+	if s.BlendSrcMode != c.BlendSrcMode || s.BlendDstMode != c.BlendDstMode || force {
 		srcMode := uint32(0)
 		dstMode := uint32(0)
-		switch s.Blend.SrcMode {
-		case core.BlendOne:
+
+		switch s.BlendSrcMode {
+		case protos.Material_BLEND_ONE:
 			srcMode = gl.ONE
-		case core.BlendOneMinusSrcAlpha:
+		case protos.Material_BLEND_ONE_MINUS_SRC_ALPHA:
 			srcMode = gl.ONE_MINUS_SRC_ALPHA
-		case core.BlendSrcAlpha:
+		case protos.Material_BLEND_SRC_ALPHA:
 			srcMode = gl.SRC_ALPHA
 		}
-		switch s.Blend.DstMode {
-		case core.BlendOne:
+
+		switch s.BlendDstMode {
+		case protos.Material_BLEND_ONE:
 			dstMode = gl.ONE
-		case core.BlendOneMinusSrcAlpha:
+		case protos.Material_BLEND_ONE_MINUS_SRC_ALPHA:
 			dstMode = gl.ONE_MINUS_SRC_ALPHA
-		case core.BlendSrcAlpha:
+		case protos.Material_BLEND_SRC_ALPHA:
 			dstMode = gl.SRC_ALPHA
 		}
 		gl.BlendFunc(srcMode, dstMode)
 	}
 
-	if s.Blend.Equation != currentState.Blend.Equation || force {
-		switch s.Blend.Equation {
-		case core.BlendFuncAdd:
+	if s.BlendEquation != c.BlendEquation || force {
+		switch s.BlendEquation {
+		case protos.Material_BLEND_FUNC_ADD:
 			gl.BlendEquation(gl.FUNC_ADD)
-		case core.BlendFuncMax:
+		case protos.Material_BLEND_FUNC_MAX:
 			gl.BlendEquation(gl.MAX)
 		}
 	}
 
-	if s.Depth.Mask != currentState.Depth.Mask || force {
-		gl.DepthMask(s.Depth.Mask)
+	if s.DepthWrite != c.DepthWrite || force {
+		gl.DepthMask(s.DepthWrite)
 	}
 
-	if s.Color.Mask != currentState.Color.Mask || force {
-		gl.ColorMask(s.Color.Mask, s.Color.Mask, s.Color.Mask, s.Color.Mask)
+	if s.ColorWrite != c.ColorWrite || force {
+		gl.ColorMask(s.ColorWrite, s.ColorWrite, s.ColorWrite, s.ColorWrite)
 	}
 
-	if s.Cull.Enabled != currentState.Cull.Enabled || force {
-		if s.Cull.Enabled {
+	if s.Culling != c.Culling || force {
+		if s.Culling {
 			gl.Enable(gl.CULL_FACE)
 		} else {
 			gl.Disable(gl.CULL_FACE)
 		}
 	}
 
-	if s.Cull.Mode != currentState.Cull.Mode || force {
-		switch s.Cull.Mode {
-		case core.CullBack:
+	if s.CullFace != c.CullFace || force {
+		switch s.CullFace {
+		case protos.Material_CULL_BACK:
 			gl.CullFace(gl.BACK)
-		case core.CullFront:
+		case protos.Material_CULL_FRONT:
 			gl.CullFace(gl.FRONT)
-		case core.CullBoth:
+		case protos.Material_CULL_BOTH:
 			gl.CullFace(gl.FRONT_AND_BACK)
 		}
 	}
 
-	if s.Program() != nil {
-		glProgram := s.Program().(*Program)
+	glProgram := core.GetResourceManager().Program(s.ProgramName).(*Program)
 
-		if s.Program() != currentState.Program() || force {
-			glProgram.bind()
-		}
-
-		// bind this node's uniforms
-		for name, uniform := range s.Uniforms() {
-			glProgram.setUniform(name, uniform.(*Uniform))
-		}
-
-		// global uniform buffer
-		if ub != nil {
-			glProgram.setUniformBufferByName("cameraConstants", ub.(*UniformBuffer))
-		}
-
-		// and node uniform buffers
-		for name, uniformBuffer := range s.UniformBuffers() {
-			glProgram.setUniformBufferByName(name, uniformBuffer.(*UniformBuffer))
-		}
-
-		// activate textures
-		for sampler, texture := range s.Textures() {
-			if currentState.Textures()[sampler] != texture {
-				bindTexture(sampler, texture.(*Texture))
-			}
-		}
+	if s.ProgramName != c.ProgramName || force {
+		glProgram.bind()
 	}
 
-	// let everyone else know this is active
-	currentState = s
+	// global uniform buffer
+	if ub != nil {
+		glProgram.setUniformBufferByName("cameraConstants", ub.(*UniformBuffer))
+	}
+
+	currentState = s.Name
+
+	return glProgram
+}
+
+func breaksBatch(p *Program, md *core.MaterialData) bool {
+	for name, texture := range md.Textures() {
+		textureUnit := p.samplerBindings[name]
+		if textureUnitBindings[textureUnit] != texture.(*Texture).ID {
+			return true
+		}
+	}
+	return false
+}
+
+func bindTextures(p *Program, md *core.MaterialData) {
+	for name, texture := range md.Textures() {
+		p.setTexture(name, texture.(*Texture))
+	}
+}
+
+func bindUniformBuffers(p *Program, md *core.MaterialData) {
+	for name, uniformBuffer := range md.UniformBuffers() {
+		p.setUniformBufferByName(name, uniformBuffer.(*UniformBuffer))
+	}
+}
+
+func bindUniforms(p *Program, md *core.MaterialData) {
+	for name, uniform := range md.Uniforms() {
+		p.setUniform(name, uniform.(*Uniform))
+	}
 }

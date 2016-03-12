@@ -26,7 +26,7 @@ func makeDemo2Scene() *core.Scene {
 			randomVec := mgl64.Vec3{float64(i) * 9.96 * 2.0, float64(j) * 9.96 * 2.0, 0.0}
 
 			// load model
-			f16 := core.GetResourceManager().InstancedModel("f16.model")
+			f16 := core.GetResourceManager().Model("f16.model")
 			f16.Translate(randomVec)
 			f16.Rotate(float64(i), randomVec)
 

@@ -25,6 +25,22 @@ func (t *Texture) Handle() unsafe.Pointer {
 	return unsafe.Pointer(t)
 }
 
+// Lt implements the core.Texture interface
+func (t *Texture) Lt(other core.Texture) bool {
+	if ot, ok := other.(*Texture); ok {
+		return t.ID < ot.ID
+	}
+	return true
+}
+
+// Gt implements the core.Texture interface
+func (t *Texture) Gt(other core.Texture) bool {
+	if ot, ok := other.(*Texture); ok {
+		return t.ID > ot.ID
+	}
+	return false
+}
+
 func textureCleanup(t *Texture) {
 	glog.Info("Deleting texture: ", t.ID)
 }
@@ -92,14 +108,4 @@ func (rs *RenderSystem) NewRawTexture(width, height int, payload []byte) core.Te
 	t := &Texture{texture}
 	runtime.SetFinalizer(t, textureCleanup)
 	return t
-}
-
-func bindTexture(textureUnit uint32, t *Texture) {
-	gl.ActiveTexture(gl.TEXTURE0 + textureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, t.ID)
-}
-
-func unbindTexture(textureUnit uint32) {
-	gl.ActiveTexture(gl.TEXTURE0 + textureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
 }

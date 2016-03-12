@@ -18,4 +18,10 @@ type Uniform interface {
 // UniformBuffer is an interface which wraps program UniformBuffers. This will be replaced by ConstantBuffers.
 type UniformBuffer interface {
 	Set(unsafe.Pointer, int)
+
+	// Lt is used for sorting
+	Lt(UniformBuffer) bool
+
+	// Gt
+	Gt(UniformBuffer) bool
 }

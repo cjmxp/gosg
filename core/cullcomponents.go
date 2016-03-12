@@ -25,6 +25,7 @@ func (cc *DefaultCullComponent) Run(scene *Scene, camera *Camera, node *Node, no
 
 	// the default implementation is to add ourselves to the bucket
 	if node.mesh != nil {
+		node.materialData.Uniform("mMatrix").Set(node.worldTransform)
 		*nodeBucket = append(*nodeBucket, node)
 	}
 
@@ -39,13 +40,14 @@ func (cc *DefaultCullComponent) Run(scene *Scene, camera *Camera, node *Node, no
 type AlwaysPassCullComponent struct{}
 
 // Run implements the CullComponent interface
-func (apcc *AlwaysPassCullComponent) Run(s *Scene, c *Camera, n *Node, nb *[]*Node) {
+func (apcc *AlwaysPassCullComponent) Run(scene *Scene, camera *Camera, node *Node, nodeBucket *[]*Node) {
 	// the default implementation is to add ourselves to the bucket
-	if n.mesh != nil {
-		*nb = append(*nb, n)
+	if node.mesh != nil {
+		node.materialData.Uniform("mMatrix").Set(node.worldTransform)
+		*nodeBucket = append(*nodeBucket, node)
 	}
 
-	for _, ch := range n.children {
-		ch.cullComponent.Run(s, c, ch, nb)
+	for _, ch := range node.children {
+		ch.cullComponent.Run(scene, camera, ch, nodeBucket)
 	}
 }

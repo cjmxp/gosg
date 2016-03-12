@@ -114,7 +114,6 @@ func (s *Scene) cull() {
 	}
 
 	for _, camera := range s.cameraList {
-		camera.constants.SetLights(s.lights)
 		sceneRoot := camera.Scene()
 
 		var bucket []*Node
@@ -124,18 +123,24 @@ func (s *Scene) cull() {
 }
 
 func (s *Scene) draw() {
+	var p RenderPlan
+
 	for _, camera := range s.cameraList {
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {
 				if light.Shadower != nil {
-					light.Shadower.Render(light, s.drawables[camera.name])
+					shadowStage := light.Shadower.RenderStage(light, s.drawables[camera.name])
+					p.Stages = append(p.Stages, shadowStage)
 				}
 			}
 		}
 
-		camera.PrepareViewport()
-		camera.Render(s.drawables[camera.name])
+		camera.constants.SetData(camera.ProjectionMatrix(), camera.ViewMatrix(), s.lights)
+		mainStage := DefaultRenderTechnique(camera, s.drawables[camera.name])
+		p.Stages = append(p.Stages, mainStage)
 	}
+
+	renderSystem.ExecuteRenderPlan(p)
 }
 
 // SetDisplaysCursor sets whether this scene wants the cursor to be hidden or not

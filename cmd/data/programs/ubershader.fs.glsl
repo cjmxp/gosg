@@ -78,8 +78,6 @@ float shadow(vec4 coords, float dotNL) {
 }
 
 void main() {
-    color = vec4(1.0);
-
     vec3 N = normalize(tbn * (texture(normalTex, tcoords0.st).rgb * 2.0 - 1.0));
     vec3 E = normalize(cameraPosition - position);
 
@@ -98,10 +96,10 @@ void main() {
         vec3 lightPosition = lights[i].position.xyz;
         vec3 L = normalize(lightPosition - position);
         vec3 R = normalize(-reflect(L, N));
-        
+
         vec3 colorDiffuse = diffuseTerm * max(dot(N, L), 0.0);
-        vec3 colorSpecular = pow(max(dot(R, E), 0.0), materialShininess) * specularTerm;  
-        
+        vec3 colorSpecular = pow(max(dot(R, E), 0.0), materialShininess) * specularTerm;
+
         // shadow
         vec4 lightPos = lights[i].vpMatrix * vec4(position, 1.0);
         color.rgb += (colorDiffuse + colorSpecular) * shadow(lightPos, dot(N, L));

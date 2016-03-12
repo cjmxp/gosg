@@ -49,6 +49,7 @@ func New(basePath string) *ResourceSystem {
 	paths := make(map[string]string)
 	paths["base"] = bp
 	paths["programs"] = filepath.Join(bp, "programs")
+	paths["materials"] = filepath.Join(bp, "materials")
 	paths["models"] = filepath.Join(bp, "models")
 	paths["textures"] = filepath.Join(bp, "textures")
 
@@ -91,6 +92,13 @@ func (r *ResourceSystem) Model(filename string) []byte {
 // Texture implements the core.ResourceSystem interface
 func (r *ResourceSystem) Texture(filename string) []byte {
 	fullpath := filepath.Join(r.paths["textures"], filename)
+	res := r.resourceWithFullpath(fullpath)
+	return res
+}
+
+// Material implements the core.ResourceSystem interface
+func (r *ResourceSystem) Material(name string) []byte {
+	fullpath := filepath.Join(r.paths["materials"], name+".json")
 	res := r.resourceWithFullpath(fullpath)
 	return res
 }

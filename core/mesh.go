@@ -24,20 +24,18 @@ type Mesh interface {
 	SetBitangents(tangents []float32)
 	SetTextureCoordinates(size int32, coordinates []float32)
 	SetIndices(indices []uint16)
+	SetInstanceCount(count int)
+	SetModelMatrices(matrices []float32)
 
 	SetName(name string)
 	Name() string
 
-	Draw(ub UniformBuffer, st *State)
+	Draw()
 
 	Bounds() *AABB
-}
 
-// InstancedMesh is an interface which wraps a Mesh and adds instancing support.
-type InstancedMesh interface {
-	Mesh
-	SetInstanceCount(count int)
-	SetModelMatrices(matrices []float32)
+	Lt(Mesh) bool
+	Gt(Mesh) bool
 }
 
 // IMGUIMesh is an interface which wraps a Mesh used for IMGUI primitives.

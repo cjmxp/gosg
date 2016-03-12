@@ -17,21 +17,23 @@ import (
 
 // Program is an OpenGL program
 type Program struct {
-	name                    string
-	id                      uint32
-	shaders                 map[string]*shader
-	compileLog              string
-	uniformLog              string
-	uniformLocations        map[string]int32
-	uniformBlockIndexes     map[string]uint32
-	uniformBufferBindings   map[string]uint32
-	uniformBufferBindingIDs map[string]uint32
+	name                  string
+	id                    uint32
+	shaders               map[string]*shader
+	compileLog            string
+	uniformLog            string
+	uniformLocations      map[string]int32
+	uniformBlockIndexes   map[string]uint32
+	uniformBufferBindings map[string]uint32
+	samplerBindings       map[string]uint32
+	dirtySamplerBindings  bool
 }
 
 // programSpec is the struct we get as bytes on calls to NewProgram
 type programSpec struct {
 	Shaders               map[string]string `json:"shaders"`
 	UniformBufferBindings map[string]uint32 `json:"uniformBufferBindings"`
+	SamplerBindings       map[string]uint32 `json:"samplerBindings"`
 }
 
 func programCleanup(p *Program) {
@@ -72,6 +74,7 @@ func (r *RenderSystem) NewProgram(name string, data []byte) core.Program {
 		make(map[string]uint32),
 		make(map[string]uint32),
 		make(map[string]uint32),
+		false,
 	}
 
 	// set shaders
@@ -131,6 +134,13 @@ func (r *RenderSystem) NewProgram(name string, data []byte) core.Program {
 		}
 	}
 
+	// bind samplers to textureunits, this requires the program to be active
+	for name, textureUnit := range spec.SamplerBindings {
+		prog.samplerBindings[name] = textureUnit
+	}
+
+	prog.dirtySamplerBindings = true
+
 	return &prog
 }
 
@@ -176,6 +186,13 @@ func (p *Program) extractUniformBlockIndexes() {
 
 func (p *Program) bind() {
 	gl.UseProgram(p.id)
+
+	if p.dirtySamplerBindings {
+		for name, textureUnit := range p.samplerBindings {
+			p.setUniform(name, &Uniform{textureUnit})
+		}
+		p.dirtySamplerBindings = false
+	}
 }
 
 func (p *Program) setUniform(name string, u *Uniform) {
@@ -187,6 +204,8 @@ func (p *Program) setUniform(name string, u *Uniform) {
 	if !found {
 		return
 	}
+
+	glog.Info("Setting uniform: ", name, u)
 
 	switch uval := u.Value().(type) {
 	case mgl32.Mat4:
@@ -214,6 +233,8 @@ func (p *Program) setUniform(name string, u *Uniform) {
 		gl.Uniform2fv(uloc, int32(len(uval)), &newval[0])
 	case int:
 		gl.Uniform1i(uloc, int32(uval))
+	case uint32:
+		gl.Uniform1i(uloc, int32(uval))
 	case float32:
 		gl.Uniform1f(uloc, uval)
 	case float64:
@@ -224,8 +245,22 @@ func (p *Program) setUniform(name string, u *Uniform) {
 }
 
 func (p *Program) setUniformBufferByName(name string, ub *UniformBuffer) {
-	p.uniformBufferBindingIDs[name] = ub.id
+	if _, ok := p.uniformBufferBindings[name]; !ok {
+		return
+	}
+
 	gl.BindBufferBase(gl.UNIFORM_BUFFER, p.uniformBufferBindings[name], ub.id)
+}
+
+func (p *Program) setTexture(name string, texture *Texture) {
+	if _, ok := p.samplerBindings[name]; !ok {
+		return
+	}
+
+	textureUnit := p.samplerBindings[name]
+	gl.ActiveTexture(gl.TEXTURE0 + textureUnit)
+	gl.BindTexture(gl.TEXTURE_2D, texture.ID)
+	textureUnitBindings[textureUnit] = texture.ID
 }
 
 // Name implements the core.Program interface
