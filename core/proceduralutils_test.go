@@ -1,9 +1,8 @@
 package core
 
 import (
+	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -42,13 +41,29 @@ func init() {
 func TestStringHashes(t *testing.T) {
 	for key, refHash := range expectedStringHashes {
 		testHash := HashStringToU32(key)
-		assert.Equal(t, testHash, refHash, "String hash mismatch")
+		if testHash != refHash {
+			t.Error("String hash mismatch")
+		}
+	}
+}
+
+func BenchmarkHashU32(b *testing.B) {
+	for i := uint32(1); i < 1E4; i++ {
+		HashU32(i)
 	}
 }
 
 func TestU32Hashes(t *testing.T) {
 	for key, refHash := range expectedU32Hashes {
 		testHash := HashU32(key)
-		assert.Equal(t, testHash, refHash, "U32 hash mismatch")
+		if testHash != refHash {
+			t.Error("U32 hash mismatch")
+		}
+	}
+}
+
+func BenchmarkHashStringToU32(b *testing.B) {
+	for i := uint32(1); i < 1E4; i++ {
+		HashStringToU32(fmt.Sprintf("SomeObject:%d", i))
 	}
 }
