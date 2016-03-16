@@ -125,13 +125,23 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 	return glProgram
 }
 
-func breaksBatch(p *Program, md *core.MaterialData) bool {
-	for name, texture := range md.Textures() {
-		textureUnit := p.samplerBindings[name]
-		if textureUnitBindings[textureUnit] != texture.(*Texture).ID {
+func breaksBatch(a *core.MaterialData, b *core.MaterialData) bool {
+	for name := range b.Textures() {
+		ta, ok := a.Textures()[name]
+		if !ok {
+			return true
+		}
+
+		tb, ok := b.Textures()[name]
+		if !ok {
+			return true
+		}
+
+		if ta.(*Texture).ID != tb.(*Texture).ID {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -147,8 +157,10 @@ func bindUniformBuffers(p *Program, md *core.MaterialData) {
 	}
 }
 
+/*
 func bindUniforms(p *Program, md *core.MaterialData) {
 	for name, uniform := range md.Uniforms() {
 		p.setUniform(name, uniform.(*Uniform))
 	}
 }
+*/

@@ -205,8 +205,6 @@ func (p *Program) setUniform(name string, u *Uniform) {
 		return
 	}
 
-	glog.Info("Setting uniform: ", name, u)
-
 	switch uval := u.Value().(type) {
 	case mgl32.Mat4:
 		gl.UniformMatrix4fv(uloc, 1, false, &uval[0])

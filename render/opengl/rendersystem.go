@@ -124,41 +124,48 @@ func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
 	}
 }
 
+type RenderBatch struct {
+	program *Program
+	nodes   []*core.Node
+}
+
 // ExecuteRenderPlan implements the core.RenderSystem interface
 func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
+	glog.Info("Renderplan starting...")
+
 	for _, stage := range p.Stages {
+		glog.Info("RenderStage starting: ", stage.Name)
 		r.PrepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
+			glog.Info("RenderPass starting:", pass.Name)
 			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
 
-			var lastBatchIndex int
-			for i := range pass.Nodes {
-				if !breaksBatch(program, pass.Nodes[i].MaterialData()) || i == 0 {
+			var renderBatches []RenderBatch
+			var lastBatchIndex = 0
+			for i := 0; i < len(pass.Nodes); i++ {
+				if i == 0 {
 					continue
 				}
 
-				// need to break batch, get lastBatchIndex, get current index, slice node list
-				batch := pass.Nodes[lastBatchIndex:i]
-
-				// renderbatch
-				r.renderBatch(program, batch)
-
-				// move head
-				lastBatchIndex = i
+				if breaksBatch(pass.Nodes[i].MaterialData(), pass.Nodes[i-1].MaterialData()) {
+					renderBatches = append(renderBatches, RenderBatch{program, pass.Nodes[lastBatchIndex:i]})
+					lastBatchIndex = i
+				}
 			}
 
-			// render last batch
-			batch := pass.Nodes[lastBatchIndex:len(pass.Nodes)]
-			r.renderBatch(program, batch)
+			// close last batch
+			renderBatches = append(renderBatches, RenderBatch{program, pass.Nodes[lastBatchIndex:]})
+
+			for _, b := range renderBatches {
+				r.renderBatch(b.program, b.nodes)
+			}
 		}
 	}
 }
 
 func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
-	if len(nodes) == 0 {
-		return
-	}
+	glog.Info("RenderBatch starting with nodecount: ", len(nodes))
 
 	// bind the textures for this batch
 	bindTextures(program, nodes[0].MaterialData())
