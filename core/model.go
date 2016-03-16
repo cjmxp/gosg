@@ -48,7 +48,7 @@ func LoadModel(name string, res []byte) *Node {
 		node := NewNode(basename + fmt.Sprintf("-%d", i))
 		// get program, support selecting program based on material property in modelfile
 		// fixme: we don't want this hardcoded, use model file
-		node.materialName = "uber-opaque-prez"
+		node.material = resourceManager.Material("uber-opaque-prez")
 
 		// get textures
 		if len(model.Meshes[i].DiffuseTexture) > 0 {

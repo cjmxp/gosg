@@ -3,6 +3,7 @@ package core
 import (
 	"runtime"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/golang/glog"
 )
@@ -36,7 +37,7 @@ type Node struct {
 	worldBounds           *AABB
 
 	// state management
-	materialName string
+	material     *protos.Material
 	materialData MaterialData
 
 	// geometry, lighting & physics
@@ -47,7 +48,7 @@ type Node struct {
 	// possibly custom stuff
 	lightExtractor   LightExtractor
 	inputComponent   InputComponent
-	cullComponent    CullComponent
+	cullComponent    Culler
 	physicsComponent PhysicsComponent
 }
 
@@ -70,13 +71,20 @@ func (a NodesByMaterial) Less(i, j int) bool {
 	// this maps to: node.materialName, node.materialData.textures, node.materialData.bufferObjects
 
 	// sort by materialName first
-	if a[i].materialName < a[j].materialName {
+	if a[i].material.Name < a[j].material.Name {
 		return true
-	} else if a[i].materialName > a[j].materialName {
+	} else if a[i].material.Name > a[j].material.Name {
 		return false
 	}
 
-	// if we got here, they share the same material/program hence use the same sampler names, look for those textures
+	// if we got here they share the same material, check program
+	if a[i].material.ProgramName < a[j].material.ProgramName {
+		return true
+	} else if a[i].material.ProgramName > a[j].material.ProgramName {
+		return false
+	}
+
+	// if we got here, they share the same program hence use the same sampler names, look for those textures
 	for textureName := range a[i].materialData.textures {
 		textureI, textureJ := a[i].materialData.textures[textureName], a[j].materialData.textures[textureName]
 		if textureI.Lt(textureJ) {
@@ -171,7 +179,7 @@ func NewNode(name string) *Node {
 	n.inverseWorldTransform = n.transform.Inv()
 	n.active = true
 	n.bounds = NewAABB()
-	n.materialName = ""
+	n.material = nil
 	n.materialData = NewMaterialData()
 	n.children = make([]*Node, 0)
 	n.dirtyBounds = true
@@ -179,7 +187,7 @@ func NewNode(name string) *Node {
 
 	// user should override
 	n.lightExtractor = new(DefaultLightExtractor)
-	n.cullComponent = new(DefaultCullComponent)
+	n.cullComponent = new(DefaultCuller)
 	n.inputComponent = nil
 	n.physicsComponent = new(DefaultPhysicsComponent)
 
@@ -259,9 +267,9 @@ func (n *Node) setDirtyBounds() {
 	}
 }
 
-// MaterialName returns the node's material name
-func (n *Node) MaterialName() string {
-	return n.materialName
+// MaterialName returns the node's material
+func (n *Node) Material() *protos.Material {
+	return n.material
 }
 
 // MaterialData returns the node's state
@@ -322,7 +330,7 @@ func (n *Node) Parent() *Node {
 }
 
 // SetCullComponent sets the node's culler.
-func (n *Node) SetCullComponent(cc CullComponent) {
+func (n *Node) SetCullComponent(cc Culler) {
 	n.cullComponent = cc
 }
 
@@ -332,7 +340,7 @@ func (n *Node) SetInputComponent(ic InputComponent) {
 }
 
 // CullComponent returns the node's culler
-func (n *Node) CullComponent() CullComponent {
+func (n *Node) CullComponent() Culler {
 	return n.cullComponent
 }
 

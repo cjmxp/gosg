@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/golang/glog"
 )
 
@@ -82,9 +83,9 @@ const (
 
 // RenderPass represents one operation of rendering a set of nodes with a given rasterstate and a program
 type RenderPass struct {
-	Nodes        []*Node
-	Name         string
-	MaterialName string
+	Nodes    []*Node
+	Name     string
+	Material *protos.Material
 }
 
 // RenderStage represents a group of renderpasses from a single camera and list of nodes
@@ -118,22 +119,22 @@ func GetRenderSystem() RenderSystem {
 
 func debugNodeMaterials(nodes []*Node) {
 	for _, n := range nodes {
-		glog.Infof("%s: %#v", n.materialName, n.materialData)
+		glog.Infof("%s: %#v", n.material, n.materialData)
 	}
 }
 
 // MaterialBuckets takes a list of *Node and returns a map with each materialName as a key and a list of *Node
 // using it as values.
-func MaterialBuckets(nodes []*Node) map[string][]*Node {
+func MaterialBuckets(nodes []*Node) map[*protos.Material][]*Node {
 	// sort by material, then bucket
 	sort.Sort(NodesByMaterial(nodes))
 
-	buckets := make(map[string][]*Node)
+	buckets := make(map[*protos.Material][]*Node)
 	for _, n := range nodes {
-		if _, ok := buckets[n.materialName]; ok != true {
-			buckets[n.materialName] = make([]*Node, 0)
+		if _, ok := buckets[n.material]; ok != true {
+			buckets[n.material] = make([]*Node, 0)
 		}
-		buckets[n.materialName] = append(buckets[n.materialName], n)
+		buckets[n.material] = append(buckets[n.material], n)
 	}
 	return buckets
 }
@@ -145,9 +146,9 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 
 	// create a depth prepass, single state, program and all nodes
 	out.Passes = append(out.Passes, RenderPass{
-		MaterialName: "zpass",
-		Name:         "DepthPrePass",
-		Nodes:        nodes,
+		Material: resourceManager.Material("zpass"),
+		Name:     "DepthPrePass",
+		Nodes:    nodes,
 	})
 
 	// get per-material buckets
@@ -157,9 +158,9 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 	// fixme: make sure transparent materials are always rendered last
 	for material, nodeBucket := range materialBuckets {
 		out.Passes = append(out.Passes, RenderPass{
-			MaterialName: material,
-			Name:         "Diffuse",
-			Nodes:        nodeBucket,
+			Material: material,
+			Name:     "Diffuse",
+			Nodes:    nodeBucket,
 		})
 	}
 

@@ -30,8 +30,12 @@ func New() *RenderSystem {
 
 // Start implements the core.RenderSystem interface
 func (r *RenderSystem) Start() {
-	// set the default state
-	bindMaterialState(nil, currentState, true)
+	// load clear material
+	clearMaterial = core.GetResourceManager().Material("clear")
+
+	// set it as the active one, and force bind it
+	currentMaterial = clearMaterial
+	bindMaterialState(nil, clearMaterial, true)
 
 	// create timers
 	gl.GenQueries(1, &r.timerQuery)
@@ -115,7 +119,7 @@ func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
 	}
 
 	if clearargs != 0 {
-		bindMaterialState(nil, "clear", true)
+		bindMaterialState(nil, clearMaterial, true)
 		gl.Clear(clearargs)
 	}
 }
@@ -126,7 +130,7 @@ func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 		r.PrepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
-			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.MaterialName, false)
+			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
 
 			var lastBatchIndex int
 			for i := range pass.Nodes {

@@ -92,9 +92,9 @@ func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 	out.Camera = s.camera
 	out.Name = "ShadowStage"
 	out.Passes = append(out.Passes, RenderPass{
-		MaterialName: "zpass",
-		Name:         "ShadowPass",
-		Nodes:        nodes,
+		Material: resourceManager.Material("zpass"),
+		Name:     "ShadowPass",
+		Nodes:    nodes,
 	})
 
 	// for now, hack the shadow texture sampler
