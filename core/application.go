@@ -39,6 +39,9 @@ func (app *Application) Start(acConstructor func() ClientApplication) {
 	// create the client app
 	app.client = acConstructor()
 
+	// step the windowsystem to force swap buffers before starting loop
+	windowSystem.Step()
+
 	// start main loop, all systems go
 	app.runLoop()
 
