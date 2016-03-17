@@ -119,7 +119,7 @@ func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
 	}
 
 	if clearargs != 0 {
-		bindMaterialState(nil, clearMaterial, true)
+		bindMaterialState(nil, clearMaterial, false)
 		gl.Clear(clearargs)
 	}
 }

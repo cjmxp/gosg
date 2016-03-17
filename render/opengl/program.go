@@ -256,9 +256,11 @@ func (p *Program) setTexture(name string, texture *Texture) {
 	}
 
 	textureUnit := p.samplerBindings[name]
-	gl.ActiveTexture(gl.TEXTURE0 + textureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, texture.ID)
-	textureUnitBindings[textureUnit] = texture.ID
+	if textureUnitBindings[textureUnit] != texture.ID {
+		gl.ActiveTexture(gl.TEXTURE0 + textureUnit)
+		gl.BindTexture(gl.TEXTURE_2D, texture.ID)
+		textureUnitBindings[textureUnit] = texture.ID
+	}
 }
 
 // Name implements the core.Program interface
