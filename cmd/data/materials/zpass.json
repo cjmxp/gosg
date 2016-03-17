@@ -1,5 +1,5 @@
 {
-    "programName": "flatcolor",
+    "programName": "depthonly",
     "culling": true,
     "cullFace": "CULL_BACK",
     "blending": false,
