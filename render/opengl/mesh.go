@@ -22,15 +22,16 @@ const (
 
 // Mesh implements the core.Mesh interface
 type Mesh struct {
-	vao           uint32
-	dirty         bool
-	indexcount    int32
-	instanceCount int32
-	name          string
-	buffers       map[bufferType]uint32
-	bounds        *core.AABB
-	primitiveType uint32
-	compileList   []func()
+	vao                 uint32
+	dirty               bool
+	indexcount          int32
+	instanceCount       int32
+	name                string
+	buffers             map[bufferType]uint32
+	bounds              *core.AABB
+	primitiveType       uint32
+	compileList         []func()
+	updateTransformFunc func()
 }
 
 // IMGUIMesh implements the core.IMGUIMesh interface
@@ -291,9 +292,18 @@ func (m *Mesh) Draw() {
 		m.compile()
 	}
 
+	// bind
 	gl.BindVertexArray(m.vao)
+
+	if m.updateTransformFunc != nil {
+		m.updateTransformFunc()
+	}
+
+	// draw call
 	gl.DrawElementsInstanced(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount)
 	//gl.DrawElementsInstancedBaseVertexBaseInstance(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount, 0, 0)
+
+	// unbind
 	gl.BindVertexArray(0)
 }
 
@@ -370,12 +380,11 @@ func (m *Mesh) SetInstanceCount(count int) {
 
 // SetModelMatrices implements the core.InstancedMesh interface
 func (m *Mesh) SetModelMatrices(matrices []float32) {
-	m.compileList = append(m.compileList, func() {
+	m.updateTransformFunc = func() {
 
 		buf := uint32(0)
 
 		if m.buffers[modelMatrixBuffer] == 0 {
-			gl.BindVertexArray(m.vao)
 			gl.GenBuffers(1, &buf)
 			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 
@@ -401,9 +410,7 @@ func (m *Mesh) SetModelMatrices(matrices []float32) {
 			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 		}
 
-		//4 : sizeof float32
 		gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(&matrices[0]), gl.STATIC_DRAW)
-	})
-
-	m.dirty = true
+		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	}
 }
