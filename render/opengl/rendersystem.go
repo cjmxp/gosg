@@ -139,11 +139,7 @@ func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 
 			var renderBatches []RenderBatch
 			var lastBatchIndex = 0
-			for i := 0; i < len(pass.Nodes); i++ {
-				if i == 0 {
-					continue
-				}
-
+			for i := 1; i < len(pass.Nodes); i++ {
 				if breaksBatch(pass.Nodes[i].MaterialData(), pass.Nodes[i-1].MaterialData()) {
 					renderBatches = append(renderBatches, RenderBatch{program, pass.Nodes[lastBatchIndex:i]})
 					lastBatchIndex = i
