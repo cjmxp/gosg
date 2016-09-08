@@ -1,18 +1,16 @@
 package opengl
 
 import (
+	"encoding/json"
 	"reflect"
 	"runtime"
 	"strings"
 
 	"github.com/fcvarela/gosg/core"
-	"github.com/golang/glog"
-
-	"encoding/json"
-
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/golang/glog"
 )
 
 // Program is an OpenGL program

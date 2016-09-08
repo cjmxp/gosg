@@ -12,7 +12,7 @@ type Shadower interface {
 	// RenderTarget returns the shadower's render target.
 	RenderTarget() RenderTarget
 
-	// Render calls the shadower render implementation by assing a light, a `SceneBlock` and a list of nodes.
+	// Render calls the shadower render implementation by assing a light and a list of nodes.
 	RenderStage(light *Light, nodes []*Node) RenderStage
 }
 

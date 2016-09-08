@@ -372,6 +372,8 @@ func (n *Node) updateBounds() {
 
 	// transform bounds w/ worldtransform
 	n.worldBounds = n.bounds.Transformed(n.worldTransform)
+
+	n.dirtyBounds = false
 }
 
 func (n *Node) updateTransforms() {
@@ -381,6 +383,7 @@ func (n *Node) updateTransforms() {
 		n.worldTransform = n.transform
 	}
 	n.inverseWorldTransform = n.worldTransform.Inv()
+	n.dirtyTransform = false
 }
 
 // Rotate rotates the node by `eulerAngle` degrees around `axis`.

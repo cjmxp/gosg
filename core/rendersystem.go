@@ -71,16 +71,6 @@ const (
 	NodeFilterBloomCaster
 )
 
-//
-//// RenderState holds state for the rasterizer (depth, blend, scissor modes)
-//type RenderState struct {
-//	Cull    CullState
-//	Blend   BlendState
-//	Depth   DepthState
-//	Color   ColorState
-//	Scissor ScissorState
-//}
-
 // RenderPass represents one operation of rendering a set of nodes with a given rasterstate and a program
 type RenderPass struct {
 	Nodes    []*Node
