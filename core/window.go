@@ -32,11 +32,11 @@ type WindowSystem interface {
 	// WindowSize returns the current size of the managed window.
 	WindowSize() mgl32.Vec2
 
+	// Returns the current cursor position inside window (will scale and remap)
+	CursorPosition() (float64, float64)
+
 	// Monitors returns a list of monitors detected at startup.
 	Monitors() []Monitor
-
-	// SetCursorVisible sets the visibility mode of the cursor.
-	SetCursorVisible(bool)
 
 	// GetTime returns the time elapsed since application startup and should be implemented
 	// using a high resolution timer.

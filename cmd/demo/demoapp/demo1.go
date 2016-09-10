@@ -77,7 +77,6 @@ func makeDemo1Scene() *core.Scene {
 
 	// visibility and cursor mode
 	s.SetActive(true)
-	s.SetDisplaysCursor(false)
 
 	s.Root().AddChild(geoRoot)
 

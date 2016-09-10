@@ -45,8 +45,8 @@ void set_texture_id(void *texture) {
 
 void set_mouse_position(double x, double y) {
     ImGuiIO &io = ImGui::GetIO();
-    io.MousePos.x = min(max(0.0, x), io.DisplaySize.x);
-    io.MousePos.y = min(max(0.0, y), io.DisplaySize.y);
+    io.MousePos.x = x;
+    io.MousePos.y = y;
 }
 
 
@@ -74,6 +74,7 @@ unsigned char *get_texture_data(int *width, int *height) {
 
 void frame_new() {
     ImGuiIO &io = ImGui::GetIO();
+    io.MouseDrawCursor = true;
     ImGui::NewFrame();
 }
 

@@ -98,7 +98,7 @@ func (i *IMGUISystem) StartFrame(dt float64) {
 	state := core.GetInputManager().State()
 	size := core.GetWindowSystem().WindowSize()
 	i.SetDisplaySize(size)
-	i.SetMousePosition(state.Mouse.Position.X, state.Mouse.Position.Y)
+	i.SetMousePosition(core.GetWindowSystem().CursorPosition())
 	i.SetMouseButtons(
 		state.Mouse.Buttons.Active[core.MouseButton1],
 		state.Mouse.Buttons.Active[core.MouseButton2],

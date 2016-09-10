@@ -8,19 +8,22 @@ import (
 
 	"github.com/fcvarela/gosg/core"
 
+	"math"
+
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/go-gl/mathgl/mgl64"
 	"github.com/golang/glog"
 )
 
 // WindowSystem implements the core.WindowSystem interface
 type WindowSystem struct {
-	name          string
-	window        *glfw.Window
-	cfg           core.WindowConfig
-	active        bool
-	cursorVisible bool
+	name           string
+	window         *glfw.Window
+	cfg            core.WindowConfig
+	active         bool
+	cursorPosition mgl64.Vec2
 }
 
 // Monitor implements the core.MonitorVideoMode interface
@@ -151,6 +154,7 @@ func (w *WindowSystem) Start() {
 	glog.Info("Checking GL Init status")
 	glog.Info("OpenGL version: ", gl.GoStr(gl.GetString(gl.VERSION)))
 
+	w.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	w.installCallbacks()
 	glfw.SwapInterval(1)
 }
@@ -175,16 +179,6 @@ func (w *WindowSystem) WindowSize() mgl32.Vec2 {
 // ShouldClose implements the core.WindowSystem interface
 func (w *WindowSystem) ShouldClose() bool {
 	return w.window.ShouldClose()
-}
-
-// SetCursorVisible implements the core.WindowSystem interface
-func (w *WindowSystem) SetCursorVisible(v bool) {
-	w.cursorVisible = v
-	if v {
-		w.window.SetInputMode(glfw.CursorMode, glfw.CursorNormal)
-	} else {
-		w.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
-	}
 }
 
 func (w *WindowSystem) installCallbacks() {
@@ -267,13 +261,17 @@ func (w *WindowSystem) FocusCallback(window *glfw.Window, focused bool) {
 	} else {
 		w.SetActive(false)
 	}
-
-	w.SetCursorVisible(w.cursorVisible)
 }
 
 // MouseMoveCallback passes mouse scroll events to the core.InputManager
 func (w *WindowSystem) MouseMoveCallback(window *glfw.Window, x, y float64) {
 	core.GetInputManager().MouseMoveCallback(x, y)
+
+	// we also keep track of deltas for cursor position in window
+	w.cursorPosition = mgl64.Vec2{
+		math.Min(math.Max(0.0, w.cursorPosition.X()+core.GetInputManager().State().Mouse.Position.DistX), float64(w.cfg.Width)),
+		math.Min(math.Max(0.0, w.cursorPosition.Y()+core.GetInputManager().State().Mouse.Position.DistY), float64(w.cfg.Height)),
+	}
 }
 
 // MouseScrollCallback passes mouse scroll events to the core.InputManager
@@ -283,6 +281,12 @@ func (w *WindowSystem) MouseScrollCallback(window *glfw.Window, x, y float64) {
 		y = -y
 	}
 	core.GetInputManager().MouseScrollCallback(x, y)
+}
+
+// CursorPosition implements the core.WindowSystem interface
+func (w *WindowSystem) CursorPosition() (float64, float64) {
+	glog.Info(w.window.GetCursorPos())
+	return w.cursorPosition.X(), w.cursorPosition.Y()
 }
 
 // SetInputMap implements the core.WindowSystem interface by setting the core values

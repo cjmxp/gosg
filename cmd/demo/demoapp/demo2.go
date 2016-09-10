@@ -113,7 +113,6 @@ func makeDemo2Scene() *core.Scene {
 	s.AddCamera(node, camera)
 
 	s.SetActive(true)
-	s.SetDisplaysCursor(false)
 
 	return s
 }

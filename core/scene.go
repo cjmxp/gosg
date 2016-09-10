@@ -16,9 +16,6 @@ type Scene struct {
 	// should the scenemanager call update and draw this scene
 	active bool
 
-	// should this scene trigger a cursor hide/display toggle?
-	displaysCursor bool
-
 	cameraList []*Camera
 
 	// per camera draw lists
@@ -141,17 +138,4 @@ func (s *Scene) draw() {
 	}
 
 	renderSystem.ExecuteRenderPlan(p)
-}
-
-// SetDisplaysCursor sets whether this scene wants the cursor to be hidden or not
-func (s *Scene) SetDisplaysCursor(displaysCursor bool) {
-	s.displaysCursor = displaysCursor
-}
-
-func (s *Scene) movedToFront() {
-	if s.displaysCursor {
-		windowSystem.SetCursorVisible(true)
-	} else {
-		windowSystem.SetCursorVisible(false)
-	}
 }

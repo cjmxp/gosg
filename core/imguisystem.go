@@ -182,8 +182,5 @@ func NewIMGUIScene(name string, inputComponent InputComponent) *Scene {
 	// add camera to root node
 	s.AddCamera(node, camera)
 
-	// this is a ui scene, so it displays the cursor
-	s.SetDisplaysCursor(true)
-
 	return s
 }

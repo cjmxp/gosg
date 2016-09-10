@@ -23,7 +23,6 @@ func GetSceneManager() *SceneManager {
 // PushScene pushes a scene to the stack.
 func (sm *SceneManager) PushScene(s *Scene) {
 	sm.managedScenes = append(sm.managedScenes, s)
-	sm.FrontScene().movedToFront()
 }
 
 // PopScene pops a scene from the stack
@@ -35,9 +34,6 @@ func (sm *SceneManager) PopScene() *Scene {
 	previousFrontScene := sm.FrontScene()
 	sm.managedScenes = sm.managedScenes[:len(sm.managedScenes)-1]
 
-	if sm.FrontScene() != nil {
-		sm.FrontScene().movedToFront()
-	}
 	return previousFrontScene
 }
 
