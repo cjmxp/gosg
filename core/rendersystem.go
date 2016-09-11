@@ -144,15 +144,33 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 	// get per-material buckets
 	materialBuckets := MaterialBuckets(nodes)
 
-	// create pass per bucket
-	// fixme: make sure transparent materials are always rendered last
+	var opaquePasses = make([]RenderPass, 0)
+	var transparentPasses = make([]RenderPass, 0)
+
+	// create pass per bucket, opaque is default
 	for material, nodeBucket := range materialBuckets {
-		out.Passes = append(out.Passes, RenderPass{
+		if material.Blending == true {
+			transparentPasses = append(transparentPasses, RenderPass{
+				Material: material,
+				Name:     "Diffuse-Transparent",
+				Nodes:    nodeBucket,
+			})
+			continue
+		}
+
+		opaquePasses = append(opaquePasses, RenderPass{
 			Material: material,
 			Name:     "Diffuse",
 			Nodes:    nodeBucket,
 		})
 	}
+
+	out.Passes = append(out.Passes, opaquePasses...)
+	out.Passes = append(out.Passes, transparentPasses...)
+
+	//for _, p := range out.Passes {
+	//	glog.Infof("%s: , Nodes: %d, Material: %s", p.Name, len(p.Nodes), p.Material.Name)
+	//}
 
 	return
 }
