@@ -28,6 +28,7 @@ type ModelMesh struct {
 	NormalTexture  []byte
 	Name           string
 	WrapMode       int
+	Opacity        float32
 }
 
 // LoadModel parses model data from a raw resource and returns a node ready
@@ -46,9 +47,13 @@ func LoadModel(name string, res []byte) *Node {
 	parentNode := NewNode(basename)
 	for i := 0; i < len(model.Meshes); i++ {
 		node := NewNode(basename + fmt.Sprintf("-%d", i))
-		// get program, support selecting program based on material property in modelfile
-		// fixme: we don't want this hardcoded, use model file
+
+		// default material
+		glog.Info(model.Meshes[i].Opacity)
 		node.material = resourceManager.Material("uber-opaque-prez")
+		if model.Meshes[i].Opacity < 1.0 {
+			node.material = resourceManager.Material("uber-transparent")
+		}
 
 		// get textures
 		if len(model.Meshes[i].DiffuseTexture) > 0 {

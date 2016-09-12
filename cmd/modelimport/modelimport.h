@@ -15,6 +15,7 @@ size_t get_vertex_count(struct aiScene *scene, int mesh_idx);
 void get_mesh_maps(struct aiScene *scene, int mesh_idx, char *diffuse, char *normal);
 void get_mesh_name(struct aiScene *scene, int mesh_idx, char *name);
 int get_mesh_wrapmode(struct aiScene *scene, int mesh_idx);
+float get_mesh_opacity(struct aiScene *scene, int mesh_idx);
 float *get_positions(struct aiScene *scene, int mesh_idx);
 float *get_normals(struct aiScene *scene, int mesh_idx);
 float *get_tangents(struct aiScene *scene, int mesh_idx);

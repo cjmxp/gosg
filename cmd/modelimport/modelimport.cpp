@@ -54,6 +54,20 @@ int get_mesh_wrapmode(struct aiScene *scene, int mesh_idx) {
     return -1;
 }
 
+float get_mesh_opacity(struct aiScene *scene, int mesh_idx) {
+    if (scene->mMeshes[mesh_idx]->mMaterialIndex > scene->mNumMaterials) {
+        return 1.0;
+    }
+
+    float opacity;
+    struct aiMaterial *mat = scene->mMaterials[scene->mMeshes[mesh_idx]->mMaterialIndex];
+    if (AI_SUCCESS == aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, (float *)&opacity)) {
+        return opacity;
+    }
+
+    return 1.0;
+}
+
 float *get_positions(struct aiScene *scene, int mesh_idx) {
     return (float *)scene->mMeshes[mesh_idx]->mVertices;
 }

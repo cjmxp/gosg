@@ -21,9 +21,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/golang/glog"
-
 	"github.com/fcvarela/gosg/core"
+	"github.com/golang/glog"
 )
 
 // placeholder for memcpy to copy to
@@ -177,10 +176,11 @@ func importModelfile(filename string) *core.Model {
 			m.NormalTexture = normalTextureFile
 		}
 
-		s.Meshes = append(s.Meshes, m)
-
 		// set texture wrap mode
 		m.WrapMode = int(C.get_mesh_wrapmode(aiscene, C.int(meshIdx)))
+		m.Opacity = float32(C.get_mesh_opacity(aiscene, C.int(meshIdx)))
+
+		s.Meshes = append(s.Meshes, m)
 
 		// cleanup
 		glog.Infoln("Cleaning up")
