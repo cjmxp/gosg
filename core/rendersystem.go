@@ -130,7 +130,8 @@ func MaterialBuckets(nodes []*Node) map[*protos.Material][]*Node {
 }
 
 // DefaultRenderTechnique does z pre-pass, diffuse pass, transparency pass
-func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
+func DefaultRenderTechnique(camera *Camera, nodes []*Node) RenderStage {
+	var out RenderStage
 	out.Name = fmt.Sprintf("%s-DefaultRenderTechnique", camera.name)
 	out.Camera = camera
 
@@ -172,11 +173,7 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 	out.Passes = append(out.Passes, opaquePasses...)
 	out.Passes = append(out.Passes, transparentPasses...)
 
-	for _, p := range out.Passes {
-		glog.Infof("Name: %sd, Nodes: %d, Material: %s", p.Name, len(p.Nodes), p.Material.Name)
-	}
-
-	return
+	return out
 }
 
 // IMGUIRenderTechnique renders IMGUI UI nodes.
