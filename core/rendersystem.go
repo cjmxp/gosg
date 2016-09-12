@@ -134,12 +134,12 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 	out.Name = fmt.Sprintf("%s-DefaultRenderTechnique", camera.name)
 	out.Camera = camera
 
-	// create a depth prepass, single state, program and all nodes
-	out.Passes = append(out.Passes, RenderPass{
+	// create a depth prepass, single state, program and all opaque nodes
+	var zPrepass = RenderPass{
 		Material: resourceManager.Material("zpass"),
 		Name:     "DepthPrePass",
-		Nodes:    nodes,
-	})
+		Nodes:    []*Node{},
+	}
 
 	// get per-material buckets
 	materialBuckets := MaterialBuckets(nodes)
@@ -163,14 +163,18 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) (out RenderStage) {
 			Name:     "Diffuse",
 			Nodes:    nodeBucket,
 		})
+
+		// append opaque nodes to z prepass
+		zPrepass.Nodes = append(zPrepass.Nodes, nodeBucket...)
 	}
 
+	out.Passes = append(out.Passes, zPrepass)
 	out.Passes = append(out.Passes, opaquePasses...)
 	out.Passes = append(out.Passes, transparentPasses...)
 
-	//for _, p := range out.Passes {
-	//	glog.Infof("%s: , Nodes: %d, Material: %s", p.Name, len(p.Nodes), p.Material.Name)
-	//}
+	for _, p := range out.Passes {
+		glog.Infof("Name: %sd, Nodes: %d, Material: %s", p.Name, len(p.Nodes), p.Material.Name)
+	}
 
 	return
 }
