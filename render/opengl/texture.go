@@ -10,9 +10,9 @@ import (
 	"unsafe"
 
 	"github.com/fcvarela/gosg/core"
-
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/golang/glog"
+	_ "golang.org/x/image/bmp"
 )
 
 // Texture is an OpenGL texture container
