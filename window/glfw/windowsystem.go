@@ -285,7 +285,6 @@ func (w *WindowSystem) MouseScrollCallback(window *glfw.Window, x, y float64) {
 
 // CursorPosition implements the core.WindowSystem interface
 func (w *WindowSystem) CursorPosition() (float64, float64) {
-	glog.Info(w.window.GetCursorPos())
 	return w.cursorPosition.X(), w.cursorPosition.Y()
 }
 

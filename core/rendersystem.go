@@ -130,7 +130,7 @@ func MaterialBuckets(nodes []*Node) map[*protos.Material][]*Node {
 }
 
 // DefaultRenderTechnique does z pre-pass, diffuse pass, transparency pass
-func DefaultRenderTechnique(camera *Camera, nodes []*Node) RenderStage {
+func DefaultRenderTechnique(camera *Camera, materialBuckets map[*protos.Material][]*Node) RenderStage {
 	var out RenderStage
 	out.Name = fmt.Sprintf("%s-DefaultRenderTechnique", camera.name)
 	out.Camera = camera
@@ -141,9 +141,6 @@ func DefaultRenderTechnique(camera *Camera, nodes []*Node) RenderStage {
 		Name:     "DepthPrePass",
 		Nodes:    []*Node{},
 	}
-
-	// get per-material buckets
-	materialBuckets := MaterialBuckets(nodes)
 
 	var opaquePasses = make([]RenderPass, 0)
 	var transparentPasses = make([]RenderPass, 0)

@@ -123,17 +123,19 @@ func (s *Scene) draw() {
 	var p RenderPlan
 
 	for _, camera := range s.cameraList {
+		materialBuckets := MaterialBuckets(s.drawables[camera.name])
+
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {
 				if light.Shadower != nil {
-					shadowStage := light.Shadower.RenderStage(light, s.drawables[camera.name])
+					shadowStage := light.Shadower.RenderStage(light, materialBuckets)
 					p.Stages = append(p.Stages, shadowStage)
 				}
 			}
 		}
 
 		camera.constants.SetData(camera.ProjectionMatrix(), camera.ViewMatrix(), s.lights)
-		mainStage := DefaultRenderTechnique(camera, s.drawables[camera.name])
+		mainStage := DefaultRenderTechnique(camera, materialBuckets)
 		p.Stages = append(p.Stages, mainStage)
 	}
 

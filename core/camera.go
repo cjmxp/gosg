@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"unsafe"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/golang/glog"
@@ -33,7 +34,7 @@ const (
 )
 
 // RenderStageFn is a function which returns a stage of a renderplan pipeline
-type RenderStageFn func(c *Camera, n []*Node) RenderStage
+type RenderStageFn func(c *Camera, materialBuckets map[*protos.Material][]*Node) RenderStage
 
 // A Camera represents a scenegraph camera object. It wraps data which holds
 // its transforms (projection and view matrices), clear information, whether

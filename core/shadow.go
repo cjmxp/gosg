@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 
+	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
 )
@@ -13,7 +14,7 @@ type Shadower interface {
 	RenderTarget() RenderTarget
 
 	// Render calls the shadower render implementation by assing a light and a list of nodes.
-	RenderStage(light *Light, nodes []*Node) RenderStage
+	RenderStage(light *Light, materialBuckets map[*protos.Material][]*Node) RenderStage
 }
 
 // ShadowMap is a utility implementation of the Shadower interface which renders shadows by using a shadow map.
@@ -40,7 +41,7 @@ func (s *ShadowMap) RenderTarget() RenderTarget {
 }
 
 // Render implements the Shadower interface
-func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
+func (s *ShadowMap) RenderStage(light *Light, materialBuckets map[*protos.Material][]*Node) (out RenderStage) {
 	/*
 		1-find all objects that are inside the current camera frustum
 		2-find minimal aa bounding box that encloses them all
@@ -52,8 +53,13 @@ func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 	// 1-find all objects that are inside the current camera frustum
 	// 2-find minimal aa bounding box that encloses them all
 	nodesBoundsWorld := NewAABB()
-	for n := range nodes {
-		nodesBoundsWorld.ExtendWithBox(nodes[n].worldBounds)
+	for _, nodes := range materialBuckets {
+		for n := range nodes {
+			nodesBoundsWorld.ExtendWithBox(nodes[n].worldBounds)
+
+			// for now, hack the shadow texture sampler
+			nodes[n].materialData.SetTexture("shadowTex", s.camera.renderTarget.DepthTexture())
+		}
 	}
 
 	// compute lightcamera viewmatrix
@@ -88,9 +94,6 @@ func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 	// set camera constants
 	s.camera.constants.SetData(s.camera.projectionMatrix, s.camera.viewMatrix, nil)
 
-	// get per-material buckets, used to batch nodes per vertex storage (no materials here)
-	materialBuckets := MaterialBuckets(nodes)
-
 	// create pass per bucket, opaque is default
 	for material, nodeBucket := range materialBuckets {
 		if material.Blending == true {
@@ -106,11 +109,6 @@ func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 
 	out.Camera = s.camera
 	out.Name = "ShadowStage"
-
-	// for now, hack the shadow texture sampler
-	for _, node := range nodes {
-		node.materialData.SetTexture("shadowTex", s.camera.renderTarget.DepthTexture())
-	}
 
 	return
 }
