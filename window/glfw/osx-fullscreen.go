@@ -20,7 +20,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func makeFullScreen(w *glfw.Window) {
