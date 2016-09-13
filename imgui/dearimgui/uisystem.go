@@ -83,6 +83,11 @@ func (i IMGUISystem) Image(texture core.Texture, size mgl32.Vec2) {
 	C.image(texture.Handle(), (*C.float)(unsafe.Pointer(&size[0])))
 }
 
+// Text implements core.IMGUISystem interface
+func (i IMGUISystem) Text(data string) {
+	C.text(C.CString(data))
+}
+
 // SetNextWindowPos implements the core.IMGUISystem interface
 func (i *IMGUISystem) SetNextWindowPos(pos mgl32.Vec2) {
 	C.set_next_window_pos(C.float(pos[0]), C.float(pos[1]))

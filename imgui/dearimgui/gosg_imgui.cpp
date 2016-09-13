@@ -141,6 +141,10 @@ void image(void *texture, float *size) {
     ImGui::Image(texture, ImVec2(size[0], size[1]));
 }
 
+void text(const char *t) {
+    ImGui::Text("%s", t);
+}
+
 void set_next_window_pos(float x, float y) {
     ImGui::SetNextWindowPos(ImVec2(x, y));
 }

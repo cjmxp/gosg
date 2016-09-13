@@ -3,6 +3,8 @@ package opengl
 import (
 	"time"
 
+	"fmt"
+
 	"github.com/fcvarela/gosg/core"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/golang/glog"
@@ -16,6 +18,7 @@ type RenderSystem struct {
 	frameDuration     time.Duration
 	cpuDuration       time.Duration
 	startTime         float64
+	renderLog         string
 }
 
 func init() {
@@ -26,6 +29,11 @@ func init() {
 func New() *RenderSystem {
 	r := RenderSystem{waitingResult: false}
 	return &r
+}
+
+// RenderLog implements the core.RenderSystem interface
+func (r *RenderSystem) RenderLog() string {
+	return r.renderLog
 }
 
 // Start implements the core.RenderSystem interface
@@ -49,6 +57,7 @@ func (r *RenderSystem) StartTimer() {
 
 	gl.BeginQuery(gl.TIME_ELAPSED, r.timerQuery)
 	r.startTime = core.GetTimerManager().GetTime()
+	r.renderLog = ""
 }
 
 // EndTimer implements the core.RenderSystem interface
@@ -132,11 +141,11 @@ type RenderBatch struct {
 // ExecuteRenderPlan implements the core.RenderSystem interface
 func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 	for _, stage := range p.Stages {
-		//glog.Infof("RenderStage: %s", stage.Name)
+		r.renderLog += fmt.Sprintf("RenderStage: %s\n", stage.Name)
 		r.PrepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
-			//glog.Infof("\tRenderPass: %s", pass.Name)
+			r.renderLog += fmt.Sprintf("\tRenderPass: %s\n", pass.Name)
 			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
 
 			var renderBatches []RenderBatch
@@ -164,7 +173,7 @@ func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
 		return
 	}
 
-	//glog.Infof("\t\tBatch: %d nodes", len(nodes))
+	r.renderLog += fmt.Sprintf("\t\tBatch: %d nodes\n", len(nodes))
 
 	// bind the textures for this batch
 	bindTextures(program, nodes[0].MaterialData())

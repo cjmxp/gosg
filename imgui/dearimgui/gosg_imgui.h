@@ -38,6 +38,7 @@ void end();
 void plot_histogram(const char* label, const float* values, int values_count, float scale_min, float scale_max, const float *graph_size);
 int collapsing_header(const char* name);
 void image(void *texture, float *size);
+void text(const char *t);
 
 void set_next_window_pos(float x, float y);
 void set_next_window_size(float x, float y);

@@ -100,6 +100,9 @@ type IMGUISystem interface {
 
 	// Image draws a texture on a widget with the provided size.
 	Image(texture Texture, size mgl32.Vec2)
+
+	// Text displays a text box
+	Text(data string)
 }
 
 // IMGUICommand represents an individual draw command for the RenderSystem to present a part of the UI.

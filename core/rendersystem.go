@@ -59,6 +59,9 @@ type RenderSystem interface {
 	EndTimer()
 	RenderTime() time.Duration
 	CPUTime() time.Duration
+
+	// RenderLog returns a log of the render plan
+	RenderLog() string
 }
 
 // NodeFilter is a mask used by renderpasses to pick which nodes to render from a list
@@ -172,42 +175,3 @@ func DefaultRenderTechnique(camera *Camera, materialBuckets map[*protos.Material
 
 	return out
 }
-
-// IMGUIRenderTechnique renders IMGUI UI nodes.
-//func IMGUIRenderTechnique(c *Camera, nodes []*Node) (out RenderStage) {
-//for _, node := range nodes {
-//	node.mesh.Draw(ub, node.State())
-//}
-//}
-
-// AABBRenderTechnique renders AABBs and OBB. OBBs are rendered red and AABBs white.
-//func AABBRenderTechnique(ub UniformBuffer, nodes []*Node) {
-//	// create transform list from nodes, like meshbuckets
-//	if boundsMesh == nil {
-//		boundsMesh = NewAABBMesh()
-//	}
-//
-//	for _, node := range nodes {
-//		// nodespace bounds: red
-//		st := NewAABBState()
-//		center := node.Bounds().Center()
-//		size := node.mesh.Bounds().Size()
-//		st.Uniform("flatColor").Set(mgl64.Vec4{1.0, 0.0, 0.0, 1.0})
-//		st.Uniform("mMatrix").Set(
-//			node.WorldTransform().Mul4(
-//				mgl64.Translate3D(center[0], center[1], center[2]).Mul4(
-//					mgl64.Scale3D(size[0], size[1], size[2]))))
-//		boundsMesh.Draw(ub, &st)
-//
-//		// world bounds: white
-//		st = NewAABBState()
-//		center = node.worldBounds.Center()
-//		size = node.worldBounds.Size()
-//		// world bounds, no need for node transforms
-//		st.Uniform("flatColor").Set(mgl64.Vec4{1.0, 1.0, 1.0, 1.0})
-//		st.Uniform("mMatrix").Set(
-//			mgl64.Translate3D(center[0], center[1], center[2]).Mul4(
-//				mgl64.Scale3D(size[0], size[1], size[2])))
-//		boundsMesh.Draw(ub, &st)
-//	}
-//}
