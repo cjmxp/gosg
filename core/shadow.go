@@ -88,26 +88,24 @@ func (s *ShadowMap) RenderStage(light *Light, nodes []*Node) (out RenderStage) {
 	// set camera constants
 	s.camera.constants.SetData(s.camera.projectionMatrix, s.camera.viewMatrix, nil)
 
-	// remove transparent nodes
-	// fixme: we shouldn't have to allocate. before this ever happens, we should
-	// traverse the graph using filters and copying to map with filtered keys
-	// ie: shadowers: list, opaque: list, transparent: list, where each filter
-	// is a pass. this belongs in rendertechnique specs
-	newslice := []*Node{}
-	for _, n := range nodes {
-		if n.material.Blending == false {
-			newslice = append(newslice, n)
+	// get per-material buckets, used to batch nodes per vertex storage (no materials here)
+	materialBuckets := MaterialBuckets(nodes)
+
+	// create pass per bucket, opaque is default
+	for material, nodeBucket := range materialBuckets {
+		if material.Blending == true {
+			continue
 		}
+
+		out.Passes = append(out.Passes, RenderPass{
+			Material: resourceManager.Material("zpass"),
+			Name:     "ShadowPass",
+			Nodes:    nodeBucket,
+		})
 	}
 
-	// we want to return a renderstage with a two passes, instanced and non-instanced
 	out.Camera = s.camera
 	out.Name = "ShadowStage"
-	out.Passes = append(out.Passes, RenderPass{
-		Material: resourceManager.Material("zpass"),
-		Name:     "ShadowPass",
-		Nodes:    newslice,
-	})
 
 	// for now, hack the shadow texture sampler
 	for _, node := range nodes {

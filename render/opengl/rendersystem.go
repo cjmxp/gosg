@@ -132,12 +132,15 @@ type RenderBatch struct {
 // ExecuteRenderPlan implements the core.RenderSystem interface
 func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 	for _, stage := range p.Stages {
+		//glog.Infof("RenderStage: %s", stage.Name)
 		r.PrepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
+			//glog.Infof("\tRenderPass: %s", pass.Name)
 			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
 
 			var renderBatches []RenderBatch
+
 			var lastBatchIndex = 0
 			for i := 1; i < len(pass.Nodes); i++ {
 				if breaksBatch(pass.Nodes[i].MaterialData(), pass.Nodes[i-1].MaterialData()) {
@@ -160,6 +163,8 @@ func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
 	if len(nodes) == 0 {
 		return
 	}
+
+	//glog.Infof("\t\tBatch: %d nodes", len(nodes))
 
 	// bind the textures for this batch
 	bindTextures(program, nodes[0].MaterialData())

@@ -1,46 +1,23 @@
 package core
 
 import (
-	"bytes"
-	"encoding/gob"
 	"fmt"
 	"path/filepath"
 
+	"encoding/binary"
+	"math"
+
+	"github.com/fcvarela/gosg/protos"
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/proto"
 )
-
-// Model holds a list of ModelMesh items
-type Model struct {
-	Meshes []ModelMesh
-}
-
-// ModelMesh describes a 3D model
-type ModelMesh struct {
-	Positions      []float32
-	Normals        []float32
-	Tangents       []float32
-	Bitangents     []float32
-	TextureCoords  []float32
-	BoneIds        []uint16
-	BoneWeights    []float32
-	Indices        []uint16
-	DiffuseTexture []byte
-	NormalTexture  []byte
-	Name           string
-	WrapMode       int
-	Opacity        float32
-}
 
 // LoadModel parses model data from a raw resource and returns a node ready
 // to insert into the screnegraph
 func LoadModel(name string, res []byte) *Node {
-	buffer := bytes.NewBuffer(res)
-	decoder := gob.NewDecoder(buffer)
-
-	var model Model
-	err := decoder.Decode(&model)
-	if err != nil {
-		glog.Fatalln("Error decoding model file: ", err)
+	var model = &protos.Model{}
+	if err := proto.Unmarshal(res, model); err != nil {
+		glog.Fatalln(err)
 	}
 
 	basename := filepath.Base(name)
@@ -48,31 +25,26 @@ func LoadModel(name string, res []byte) *Node {
 	for i := 0; i < len(model.Meshes); i++ {
 		node := NewNode(basename + fmt.Sprintf("-%d", i))
 
-		// default material
-		glog.Info(model.Meshes[i].Opacity)
-		node.material = resourceManager.Material("uber-opaque-prez")
-		if model.Meshes[i].Opacity < 1.0 {
-			node.material = resourceManager.Material("uber-transparent")
-		}
+		node.material = resourceManager.Material(model.Meshes[i].Material)
 
 		// get textures
-		if len(model.Meshes[i].DiffuseTexture) > 0 {
-			node.MaterialData().SetTexture("diffuseTex", renderSystem.NewTexture(model.Meshes[i].DiffuseTexture))
+		if len(model.Meshes[i].DiffuseMap) > 0 {
+			node.MaterialData().SetTexture("diffuseTex", renderSystem.NewTexture(model.Meshes[i].DiffuseMap))
 		}
 
-		if len(model.Meshes[i].NormalTexture) > 0 {
-			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalTexture))
+		if len(model.Meshes[i].NormalMap) > 0 {
+			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
 		}
 
 		// set mesh data
 		mesh := renderSystem.NewMesh()
 		mesh.SetName(node.name)
-		mesh.SetPositions(model.Meshes[i].Positions)
-		mesh.SetNormals(model.Meshes[i].Normals)
-		mesh.SetTangents(model.Meshes[i].Tangents)
-		mesh.SetBitangents(model.Meshes[i].Bitangents)
-		mesh.SetTextureCoordinates(3, model.Meshes[i].TextureCoords)
-		mesh.SetIndices(model.Meshes[i].Indices)
+		mesh.SetPositions(bytesToFloat(model.Meshes[i].Positions))
+		mesh.SetNormals(bytesToFloat(model.Meshes[i].Normals))
+		mesh.SetTangents(bytesToFloat(model.Meshes[i].Tangents))
+		mesh.SetBitangents(bytesToFloat(model.Meshes[i].Bitangents))
+		mesh.SetTextureCoordinates(3, bytesToFloat(model.Meshes[i].Tcoords))
+		mesh.SetIndices(bytesToShort(model.Meshes[i].Indices))
 		mesh.SetPrimitiveType(PrimitiveTypeTriangles)
 
 		node.SetMesh(mesh)
@@ -80,4 +52,20 @@ func LoadModel(name string, res []byte) *Node {
 	}
 
 	return parentNode
+}
+
+func bytesToFloat(b []byte) []float32 {
+	data := make([]float32, len(b)/4)
+	for i := range data {
+		data[i] = math.Float32frombits(binary.LittleEndian.Uint32(b[i*4 : (i+1)*4]))
+	}
+	return data
+}
+
+func bytesToShort(b []byte) []uint16 {
+	data := make([]uint16, len(b)/2)
+	for i := range data {
+		data[i] = uint16(binary.LittleEndian.Uint16(b[i*2 : (i+1)*2]))
+	}
+	return data
 }

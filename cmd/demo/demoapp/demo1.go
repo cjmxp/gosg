@@ -12,7 +12,7 @@ func getDemo1SceneShadowTexture(s *core.Scene) core.Texture {
 	return lightNode.Light().Shadower.RenderTarget().DepthTexture()
 }
 
-func makeGeometrySubscene() (root *core.Node, camera *core.Camera) {
+func makeGeometrySubscene() (*core.Node, *core.Camera) {
 	// geometry camera
 	geometryCamera := core.NewCamera("GeometryPassCamera", core.PerspectiveProjection)
 	geometryCamera.SetAutoReshape(true)

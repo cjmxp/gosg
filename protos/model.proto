@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package protos;
+
+message Mesh {
+    bytes indices = 1;
+    bytes positions = 2;
+    bytes normals = 3;
+    bytes tangents = 4;
+    bytes bitangents = 5;
+    bytes tcoords = 6;
+    string material = 9;
+    bytes ambient_color = 10;
+    bytes diffuse_color = 11;
+    bytes specular_color = 12;
+    bytes diffuse_map = 14;
+    bytes normal_map = 15;
+    string name = 17;
+}
+
+message Model {
+    repeated Mesh meshes = 1;
+}
