@@ -25,8 +25,8 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 
 	geometryNode := core.NewNode("GeometryRoot")
 
-	for i := -10; i < 10; i++ {
-		for j := -10; j < 10; j++ {
+	for i := -5; i < 5; i++ {
+		for j := -5; j < 5; j++ {
 			randomVec := mgl64.Vec3{float64(i) * 9.96 * 2.0, float64(j) * 9.96 * 2.0, 0.0}
 
 			// load model

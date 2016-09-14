@@ -140,4 +140,5 @@ func (s *Scene) draw() {
 	}
 
 	renderSystem.ExecuteRenderPlan(p)
+	//glog.Info(renderSystem.RenderLog())
 }

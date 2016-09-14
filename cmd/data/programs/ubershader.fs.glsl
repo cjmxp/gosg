@@ -77,6 +77,25 @@ float shadow(vec4 coords, float dotNL) {
     return shadowMapPCF(shadowMapCoords.xy, compare);
 }
 
+const float A = 0.15;
+const float B = 0.50;
+const float C = 0.10;
+const float D = 0.20;
+const float E = 0.02;
+const float F = 0.30;
+const float W = 11.2;
+
+vec3 Uncharted2Tonemap(vec3 x) {
+   return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
+vec3 tonemapUncharted2(vec3 color) {
+    float ExposureBias = 2.0;
+    vec3 curr = Uncharted2Tonemap(ExposureBias * color);
+    vec3 whiteScale = 1.0 / Uncharted2Tonemap(vec3(W));
+    return curr * whiteScale;
+}
+
 void main() {
     vec3 N = normalize(tbn * (texture(normalTex, tcoords0.st).rgb * 2.0 - 1.0));
     vec3 E = normalize(cameraPosition - position);
@@ -104,7 +123,7 @@ void main() {
         vec4 lightPos = lights[i].vpMatrix * vec4(position, 1.0);
         color.rgb += (colorDiffuse + colorSpecular) * shadow(lightPos, dot(N, L));
     }
-    
-    color.rgb = 1.0f - exp2(-color.rgb * 2.2);
     color.a = material.a;
+    color.rgb = tonemapUncharted2(color.rgb);
+    color.rgb = pow(color.rgb, vec3(1.0/2.2));
 }
