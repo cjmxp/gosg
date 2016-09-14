@@ -3,13 +3,11 @@ package glfw
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"time"
 
 	"github.com/fcvarela/gosg/core"
-
-	"math"
-
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
@@ -199,14 +197,10 @@ func (w *WindowSystem) Step() {
 	w.window.SwapBuffers()
 
 	// reset input state before callbacks
-	core.GetInputManager().Reset()
 
-	//if core.GetTimerManager().Paused() {
-	// this doesn't work properly in Windows
-	//	glfw.WaitEvents()
-	//} else {
+	core.GetInputManager().Reset()
 	glfw.PollEvents()
-	//}
+	glfw.PollEvents() // fixme: this is a hack for shadow events on linux
 }
 
 // Stop implements the core.WindowSystem interface
