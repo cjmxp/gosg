@@ -2,11 +2,9 @@ package core
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/fcvarela/gosg/protos"
-	"github.com/golang/glog"
 )
 
 // RenderSystem is an interface which wraps all logic related to rendering and memory management of
@@ -108,28 +106,6 @@ func SetRenderSystem(rs RenderSystem) {
 // GetRenderSystem returns the renderSystem, thereby exposing it to any package importing core.
 func GetRenderSystem() RenderSystem {
 	return renderSystem
-}
-
-func debugNodeMaterials(nodes []*Node) {
-	for _, n := range nodes {
-		glog.Infof("%s: %#v", n.material, n.materialData)
-	}
-}
-
-// MaterialBuckets takes a list of *Node and returns a map with each materialName as a key and a list of *Node
-// using it as values.
-func MaterialBuckets(nodes []*Node) map[*protos.Material][]*Node {
-	// sort by material, then bucket
-	sort.Sort(NodesByMaterial(nodes))
-
-	buckets := make(map[*protos.Material][]*Node)
-	for _, n := range nodes {
-		if _, ok := buckets[n.material]; ok != true {
-			buckets[n.material] = make([]*Node, 0)
-		}
-		buckets[n.material] = append(buckets[n.material], n)
-	}
-	return buckets
 }
 
 // DefaultRenderTechnique does z pre-pass, diffuse pass, transparency pass

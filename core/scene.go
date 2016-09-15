@@ -105,9 +105,16 @@ func (s *Scene) cull() {
 		s.root.lightExtractor.Run(s.root, &s.lights)
 	}
 
-	for _, camera := range s.cameraList {
-		camera.drawables = camera.drawables[:0]
-		camera.scene.CullComponent().Run(s, camera, camera.scene, &camera.drawables)
+	for _, c := range s.cameraList {
+		for bk, _ := range c.materialBuckets {
+			c.materialBuckets[bk] = c.materialBuckets[bk][:0]
+		}
+
+		c.scene.CullComponent().Run(s, c, c.scene)
+
+		for bk, _ := range c.materialBuckets {
+			sort.Sort(NodesByMaterial(c.materialBuckets[bk]))
+		}
 	}
 }
 
@@ -115,19 +122,17 @@ func (s *Scene) draw() {
 	var p RenderPlan
 
 	for _, camera := range s.cameraList {
-		materialBuckets := MaterialBuckets(camera.drawables)
-
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {
 				if light.Shadower != nil {
-					shadowStage := light.Shadower.RenderStage(light, materialBuckets)
+					shadowStage := light.Shadower.RenderStage(light, camera.materialBuckets)
 					p.Stages = append(p.Stages, shadowStage)
 				}
 			}
 		}
 
 		camera.constants.SetData(camera.ProjectionMatrix(), camera.ViewMatrix(), s.lights)
-		mainStage := DefaultRenderTechnique(camera, materialBuckets)
+		mainStage := DefaultRenderTechnique(camera, camera.materialBuckets)
 		p.Stages = append(p.Stages, mainStage)
 	}
 

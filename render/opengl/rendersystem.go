@@ -3,8 +3,6 @@ package opengl
 import (
 	"time"
 
-	"fmt"
-
 	"github.com/fcvarela/gosg/core"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/golang/glog"
@@ -141,11 +139,11 @@ type RenderBatch struct {
 // ExecuteRenderPlan implements the core.RenderSystem interface
 func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 	for _, stage := range p.Stages {
-		r.renderLog += fmt.Sprintf("RenderStage: %s\n", stage.Name)
+		//r.renderLog += fmt.Sprintf("RenderStage: %s\n", stage.Name)
 		r.PrepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
-			r.renderLog += fmt.Sprintf("\tRenderPass: %s\n", pass.Name)
+			//r.renderLog += fmt.Sprintf("\tRenderPass: %s\n", pass.Name)
 			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
 
 			var renderBatches []RenderBatch
@@ -173,7 +171,7 @@ func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
 		return
 	}
 
-	r.renderLog += fmt.Sprintf("\t\tBatch: %d nodes\n", len(nodes))
+	//r.renderLog += fmt.Sprintf("\t\tBatch: %d nodes\n", len(nodes))
 
 	// bind the textures for this batch
 	bindTextures(program, nodes[0].MaterialData())

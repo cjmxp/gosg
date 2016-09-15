@@ -94,9 +94,7 @@ func (app *Application) update(dt float64) {
 	sceneManager.cull()
 
 	// draw the scenes
-	renderSystem.StartTimer()
 	sceneManager.draw()
-	renderSystem.EndTimer()
 
 	// swap context buffers and poll for input
 	windowSystem.Step()
