@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/fcvarela/gosg/core"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -151,6 +151,7 @@ func (w *WindowSystem) Start() {
 
 	glog.Info("Checking GL Init status")
 	glog.Info("OpenGL version: ", gl.GoStr(gl.GetString(gl.VERSION)))
+	glog.Info("OpenGL renderer: ", gl.GoStr(gl.GetString(gl.RENDERER)))
 
 	w.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	w.installCallbacks()
