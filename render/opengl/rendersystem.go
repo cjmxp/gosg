@@ -181,7 +181,7 @@ func (r *RenderSystem) renderBatch(program *Program, nodes []*core.Node) {
 
 	// build transform attribute buffer
 	mesh := nodes[0].Mesh()
-	matrixBuckets := make([]float32, 0)
+	var matrixBuckets []float32
 	for _, n := range nodes {
 		transform64 := n.WorldTransform()
 		transform32 := core.Mat4DoubleToFloat(transform64)
