@@ -18,9 +18,6 @@ type Scene struct {
 
 	cameraList []*Camera
 
-	// per camera draw lists
-	drawables map[string][]*Node
-
 	// per scene lights list
 	lights []*Light
 }
@@ -30,7 +27,6 @@ func deleteScene(s *Scene) {
 
 	s.root.RemoveChildren()
 	s.root = nil
-	s.drawables = nil
 
 	glog.Info("Scene finalizer finished: ", s.name)
 }
@@ -42,7 +38,6 @@ func NewScene(name string) *Scene {
 	s.name = name
 	s.active = true
 	s.cameraList = make([]*Camera, 0)
-	s.drawables = make(map[string][]*Node)
 	s.lights = make([]*Light, 0)
 
 	runtime.SetFinalizer(&s, deleteScene)
@@ -111,11 +106,8 @@ func (s *Scene) cull() {
 	}
 
 	for _, camera := range s.cameraList {
-		sceneRoot := camera.Scene()
-
-		var bucket []*Node
-		sceneRoot.CullComponent().Run(s, camera, sceneRoot, &bucket)
-		s.drawables[camera.name] = bucket
+		camera.drawables = camera.drawables[:0]
+		camera.scene.CullComponent().Run(s, camera, camera.scene, &camera.drawables)
 	}
 }
 
@@ -123,7 +115,7 @@ func (s *Scene) draw() {
 	var p RenderPlan
 
 	for _, camera := range s.cameraList {
-		materialBuckets := MaterialBuckets(s.drawables[camera.name])
+		materialBuckets := MaterialBuckets(camera.drawables)
 
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {

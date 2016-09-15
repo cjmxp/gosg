@@ -61,6 +61,7 @@ type Camera struct {
 	frustum          [6]mgl64.Vec4
 	constants        *CameraConstants
 	renderTechnique  RenderStageFn
+	drawables        []*Node
 }
 
 // CamerasByRenderOrder is used to sort cameras by the render order field.
@@ -101,6 +102,7 @@ func NewCamera(name string, projType ProjectionType) *Camera {
 	cam.node = NewNode(name)
 	cam.constants = NewCameraConstants()
 	cam.renderTechnique = DefaultRenderTechnique
+	cam.drawables = make([]*Node, 0)
 
 	runtime.SetFinalizer(&cam, deleteCamera)
 	return &cam
