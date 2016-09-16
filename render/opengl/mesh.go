@@ -19,8 +19,13 @@ const (
 )
 
 type buffers struct {
-	vao     uint32
-	buffers []uint32
+	vao           uint32
+	buffers       []uint32
+	bufferOffsets []uint32
+}
+
+func (b *buffers) addData(buffer uint32, size uint32) {
+	b.bufferOffsets[buffer] += size
 }
 
 func newBuffers() *buffers {
@@ -35,6 +40,36 @@ func newBuffers() *buffers {
 
 	// init attributes
 	gl.BindVertexArray(bf.vao)
+
+	// position
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[positionBuffer])
+	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0, nil)
+
+	// normal
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[normalBuffer])
+	gl.EnableVertexAttribArray(1)
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 0, nil)
+
+	// tangent
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[tangentBuffer])
+	gl.EnableVertexAttribArray(2)
+	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, 0, nil)
+
+	// bitangent
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[bitangentBuffer])
+	gl.EnableVertexAttribArray(3)
+	gl.VertexAttribPointer(3, 3, gl.FLOAT, false, 0, nil)
+
+	// texcoord
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[texCoordBuffer])
+	gl.EnableVertexAttribArray(4)
+	gl.VertexAttribPointer(4, 3, gl.FLOAT, false, 0, nil)
+
+	// indices
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, bf.buffers[indexBuffer])
+
+	// model matrices
 	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[modelMatrixBuffer])
 
 	gl.EnableVertexAttribArray(5)
@@ -52,6 +87,8 @@ func newBuffers() *buffers {
 	gl.EnableVertexAttribArray(8)
 	gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
 	gl.VertexAttribDivisor(8, 1)
+
+	// unbind, we can now edit buffers without active vao binding
 	gl.BindVertexArray(0)
 
 	return bf
@@ -127,17 +164,8 @@ func (m *Mesh) Name() string {
 
 // SetPositions implements the core.Mesh interface
 func (m *Mesh) SetPositions(positions []float32) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//4 : sizeof float32
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[positionBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(positions)*4, gl.Ptr(positions), gl.STATIC_DRAW)
-
-	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0, nil)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
 
 	// grow our bounds
 	for i := 0; i < len(positions); i += 3 {
@@ -151,75 +179,32 @@ func (m *Mesh) SetPositions(positions []float32) {
 
 // SetNormals implements the core.Mesh interface
 func (m *Mesh) SetNormals(normals []float32) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//4 : sizeof float32
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[normalBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(normals)*4, gl.Ptr(normals), gl.STATIC_DRAW)
-
-	gl.EnableVertexAttribArray(1)
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 0, nil)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
 }
 
 // SetTangents implements the core.Mesh interface
 func (m *Mesh) SetTangents(tangents []float32) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//4 : sizeof float32
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[tangentBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(tangents)*4, gl.Ptr(tangents), gl.STATIC_DRAW)
-
-	gl.EnableVertexAttribArray(2)
-	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, 0, nil)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
 }
 
 // SetBitangents implements the core.Mesh interface
 func (m *Mesh) SetBitangents(bitangents []float32) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//4 : sizeof float32
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[bitangentBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(bitangents)*4, gl.Ptr(bitangents), gl.STATIC_DRAW)
-
-	gl.EnableVertexAttribArray(3)
-	gl.VertexAttribPointer(3, 3, gl.FLOAT, false, 0, nil)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
 }
 
 // SetTextureCoordinates implements the core.Mesh interface
-func (m *Mesh) SetTextureCoordinates(size int32, texcoords []float32) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//4 : sizeof float32
+func (m *Mesh) SetTextureCoordinates(texcoords []float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[texCoordBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(texcoords)*4, gl.Ptr(texcoords), gl.STATIC_DRAW)
-
-	gl.EnableVertexAttribArray(4)
-	gl.VertexAttribPointer(4, size, gl.FLOAT, false, 0, nil)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
 }
 
 // SetIndices implements the core.Mesh interface
 func (m *Mesh) SetIndices(indices []uint16) {
-	gl.BindVertexArray(m.buffers.vao)
-
-	//2 : sizeof uint16
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.buffers.buffers[indexBuffer])
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices)*2, gl.Ptr(indices), gl.STATIC_DRAW)
-
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	gl.BindVertexArray(0)
-
 	m.indexcount = int32(len(indices))
 }
 
@@ -253,7 +238,9 @@ func (m *IMGUIMesh) Draw() {
 	gl.EnableVertexAttribArray(2)
 
 	var lastTexture int32
+	var lastMipmapMode int32
 	gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &lastTexture)
+	gl.GetIntegerv(gl.TEXTURE_MIN_FILTER, &lastMipmapMode)
 	gl.ActiveTexture(gl.TEXTURE0)
 
 	for i := 0; i < drawData.CommandListCount(); i++ {
@@ -274,6 +261,7 @@ func (m *IMGUIMesh) Draw() {
 		for _, cmd := range cmdlist.Commands {
 			if tex := (*Texture)(cmd.TextureID); tex != nil {
 				gl.BindTexture(gl.TEXTURE_2D, tex.ID)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 			}
 
 			gl.Scissor(
@@ -287,6 +275,7 @@ func (m *IMGUIMesh) Draw() {
 	}
 
 	gl.BindTexture(gl.TEXTURE_2D, (uint32)(lastTexture))
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, lastMipmapMode)
 
 	gl.BindVertexArray(0)
 }

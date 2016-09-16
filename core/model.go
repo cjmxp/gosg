@@ -43,7 +43,7 @@ func LoadModel(name string, res []byte) *Node {
 		mesh.SetNormals(bytesToFloat(model.Meshes[i].Normals))
 		mesh.SetTangents(bytesToFloat(model.Meshes[i].Tangents))
 		mesh.SetBitangents(bytesToFloat(model.Meshes[i].Bitangents))
-		mesh.SetTextureCoordinates(3, bytesToFloat(model.Meshes[i].Tcoords))
+		mesh.SetTextureCoordinates(bytesToFloat(model.Meshes[i].Tcoords))
 		mesh.SetIndices(bytesToShort(model.Meshes[i].Indices))
 		mesh.SetPrimitiveType(PrimitiveTypeTriangles)
 

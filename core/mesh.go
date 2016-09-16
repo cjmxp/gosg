@@ -22,7 +22,7 @@ type Mesh interface {
 	SetNormals(normals []float32)
 	SetTangents(tangents []float32)
 	SetBitangents(tangents []float32)
-	SetTextureCoordinates(size int32, coordinates []float32)
+	SetTextureCoordinates(coordinates []float32)
 	SetIndices(indices []uint16)
 	SetInstanceCount(count int)
 	SetModelMatrices(matrices []float32)
@@ -63,7 +63,7 @@ func NewScreenQuadMesh(width float32, height float32) Mesh {
 	m := renderSystem.NewMesh()
 	m.SetPrimitiveType(PrimitiveTypeTriangles)
 	m.SetPositions(positions)
-	m.SetTextureCoordinates(3, tcoords)
+	m.SetTextureCoordinates(tcoords)
 	m.SetIndices(indices)
 	m.SetName(fmt.Sprintf("ScreenQuad-%fx%f", width, height))
 	return m
