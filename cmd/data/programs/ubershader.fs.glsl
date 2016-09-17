@@ -85,6 +85,9 @@ const float E = 0.02;
 const float F = 0.30;
 const float W = 11.2;
 
+const float PI = 3.14159265358979323846;
+const float INV_PI = 1.0/PI;
+
 vec3 Uncharted2Tonemap(vec3 x) {
    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
@@ -96,32 +99,69 @@ vec3 tonemapUncharted2(vec3 color) {
     return curr * whiteScale;
 }
 
+/* BRDF */
+float fresnelSchlick( float f0, float dot_v_h ) {
+    return f0 + ( 1 - f0 ) * pow( 1.0 - dot_v_h, 5.0 );
+}
+
+float fresnelSchlick( float dot_v_h )
+{
+    float value  = clamp( 1 - dot_v_h, 0.0, 1.0 );
+    float value2 = value * value;
+    return ( value2 * value2 * value );
+}
+
+float geomSchlickGGX( float alpha, float dot_n_v )
+{
+    float k    = 0.5 * alpha;
+    float geom = dot_n_v / ( dot_n_v * ( 1 - k ) + k );
+
+    return geom;
+}
+
+float ndfGGX(float alpha, float NdotH )
+{
+    float alpha2 = alpha * alpha;
+    float t      = 1 + ( alpha2 - 1 ) * NdotH * NdotH;
+    return INV_PI * alpha2 / ( t * t );
+}
+
+vec3 BRDF(vec3 l, vec3 v, vec3 n, vec3 diffuse_color, float metalness, float roughness) {
+    float dot_n_v = dot(n, v);
+    float dot_n_l = dot(n, l);
+    float dot_n_l_clamp  = max(dot_n_l, 0.0);
+
+    vec3 h = normalize(l+v);
+    float dot_v_h = dot(v, h);
+    float fresnel = fresnelSchlick(dot_v_h);
+    vec3 f0_color = mix( diffuse_color, vec3(1.0), (1.0 - metalness));
+    vec3 specular_color = mix(f0_color, vec3(1.0), fresnel);
+
+    float clamp_roughness = max(roughness, 0.01);
+    float alpha = clamp_roughness * clamp_roughness;
+
+    float dot_n_h = dot(n, h);
+    float ndf = ndfGGX(alpha, dot_n_h);
+    float geom = geomSchlickGGX(alpha, dot_n_v);
+    float specular_brdf = (0.25 * ndf * geom ) / (dot_n_l * dot_n_v);
+    specular_color *= specular_brdf;
+
+    return dot_n_l_clamp * (INV_PI * (1.0 - metalness) * diffuse_color + specular_color);
+}
+
 void main() {
     vec3 N = normalize(tbn * (texture(normalTex, tcoords0.st).rgb * 2.0 - 1.0));
     vec3 E = normalize(cameraPosition - position);
-
     vec4 material = texture(diffuseTex, tcoords0.st);
-    vec3 materialDiffuse = material.rgb;
-    vec3 materialSpecular = materialDiffuse;
-    float materialShininess = 255.0;
 
     int lc = int(lightCount[0]);
     color.rgb = vec3(0.0);
-    
-    for (int i=0; i<lc; i++) {
-        vec3 diffuseTerm = materialDiffuse * lights[i].diffuse.rgb;
-        vec3 specularTerm = materialSpecular * lights[i].specular.rgb;
 
+    for (int i=0; i<lc; i++) {
         vec3 lightPosition = lights[i].position.xyz;
         vec3 L = normalize(lightPosition - position);
-        vec3 R = normalize(-reflect(L, N));
-
-        vec3 colorDiffuse = diffuseTerm * max(dot(N, L), 0.0);
-        vec3 colorSpecular = pow(max(dot(R, E), 0.0), materialShininess) * specularTerm;
-
-        // shadow
-        vec4 lightPos = lights[i].vpMatrix * vec4(position, 1.0);
-        color.rgb += (colorDiffuse + colorSpecular) * shadow(lightPos, dot(N, L));
+        vec4 shadowLightPos = lights[i].vpMatrix * vec4(position, 1.0);
+        color.rgb += BRDF(L, E, N, material.rgb, 0.0, 0.7) * shadow(shadowLightPos, dot(N, L));
     }
     color.a = material.a;
     color.rgb = tonemapUncharted2(color.rgb);
