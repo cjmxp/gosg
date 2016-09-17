@@ -89,16 +89,21 @@ func (app *Application) update(dt float64) {
 
 	// call game object updates
 	sceneManager.update(dt)
+	windowSystem.PollEvents()
 
 	// run the culler
 	sceneManager.cull()
+	windowSystem.PollEvents()
 
 	// draw the scenes
 	sceneManager.draw()
+	windowSystem.PollEvents()
 
 	// swap context buffers and poll for input
 	windowSystem.Step()
+	windowSystem.PollEvents()
 
 	// play audio
 	audioSystem.Step()
+	windowSystem.PollEvents()
 }

@@ -17,6 +17,10 @@ type WindowSystem interface {
 	// where implementations should swap their front/back buffers and poll for HID events.
 	Step()
 
+	// PollEvents polls for events. Call this several times per frame to ensure events
+	// are not lost
+	PollEvents()
+
 	// Stop is called by the application after its main loop returns. Implementations
 	// should call their termination/cleanup logic here.
 	Stop()
