@@ -75,11 +75,6 @@ func (m *Monitor) Name() string {
 	return m.monitor.GetName()
 }
 
-var (
-	focusOutCursorX float64
-	focusOutCursorY float64
-)
-
 func maxi(x, y int) int {
 	if x > y {
 		return x
@@ -121,8 +116,8 @@ func (w *WindowSystem) Start() {
 	glfw.WindowHint(glfw.Decorated, glfw.True)
 	glfw.WindowHint(glfw.Visible, glfw.True)
 	glfw.WindowHint(glfw.Resizable, glfw.True)
-	glfw.WindowHint(glfw.ContextVersionMajor, 3)
-	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	glfw.WindowHint(glfw.ContextVersionMajor, 4)
+	glfw.WindowHint(glfw.ContextVersionMinor, 4)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 	glfw.WindowHint(glfw.Samples, 0)
@@ -220,11 +215,9 @@ func (w *WindowSystem) SetActive(active bool) {
 	w.active = active
 
 	if w.active == true {
-		w.window.SetCursorPos(focusOutCursorX, focusOutCursorY)
 		w.window.SetCursorPosCallback(w.MouseMoveCallback)
 		core.GetTimerManager().Start()
 	} else {
-		focusOutCursorX, focusOutCursorY = w.window.GetCursorPos()
 		w.window.SetCursorPosCallback(nil)
 		core.GetTimerManager().Pause()
 	}
