@@ -90,8 +90,9 @@ func newBuffers() *buffers {
 	// indices
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, bf.buffers[indexBuffer])
 
-	// model matrices
+	// model matrices, prealloc for 200 instances of 4x4 matrices with 4 bytes per float (this is our hard-max)
 	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[modelMatrixBuffer])
+	gl.BufferData(gl.ARRAY_BUFFER, 200*16*4, nil, gl.STREAM_DRAW)
 
 	gl.EnableVertexAttribArray(5)
 	gl.VertexAttribPointer(5, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(0*16))
@@ -241,13 +242,14 @@ func (m *Mesh) Draw() {
 
 // Draw implements the core.IMGUIMesh interface
 func (m *IMGUIMesh) Draw() {
+	bindVAO(m.buffers.vao)
+
 	imguiSystem := core.GetIMGUISystem()
 	drawData := imguiSystem.GetDrawData()
 
 	m.SetPositions([]float32{0.0, 0.0, 0.0})
 	m.SetIndices([]uint16{0})
 
-	bindVAO(m.buffers.vao)
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.EnableVertexAttribArray(2)
@@ -312,6 +314,15 @@ func (m *Mesh) SetInstanceCount(count int) {
 // SetModelMatrices implements the core.InstancedMesh interface
 func (m *Mesh) SetModelMatrices(matrices []float32) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[modelMatrixBuffer])
-	gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(&matrices[0]), gl.STATIC_DRAW)
+
+	// orphaning technique #1, map, invalidate, write, unmap
+	//buf := gl.MapBufferRange(gl.ARRAY_BUFFER, 0, len(matrices)*4,
+	//	gl.MAP_WRITE_BIT|gl.MAP_INVALIDATE_BUFFER_BIT|gl.MAP_UNSYNCHRONIZED_BIT)
+	//copy((*[1 << 30]float32)(buf)[:], matrices)
+	//gl.UnmapBuffer(gl.ARRAY_BUFFER)
+
+	// orphaning technique #2: realloc. old buf is still used by in-flight draw calls, should be fastest
+	gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(matrices), gl.STREAM_DRAW)
+
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }
