@@ -26,8 +26,11 @@ type buffers struct {
 	bufferOffsets []int
 }
 
+var (
+	currentVAO = uint32(0)
+)
+
 func (b *buffers) addData(target uint32, buffer bufferType, datalen int, buf unsafe.Pointer) {
-	gl.BindVertexArray(b.vao)
 	if b.bufferOffsets[buffer] == 0 {
 		gl.BindBuffer(target, b.buffers[buffer])
 		gl.BufferData(target, datalen, buf, gl.STATIC_DRAW)
@@ -40,8 +43,6 @@ func (b *buffers) addData(target uint32, buffer bufferType, datalen int, buf uns
 		gl.BufferSubData(target, 0, b.bufferOffsets[buffer], unsafe.Pointer(&cpuBuf[0]))
 		gl.BufferSubData(target, b.bufferOffsets[buffer], datalen, buf)
 	}
-	gl.BindVertexArray(0)
-
 	b.bufferOffsets[buffer] += datalen
 }
 
@@ -59,7 +60,7 @@ func newBuffers() *buffers {
 	gl.GenBuffers(int32(len(bf.buffers)), &bf.buffers[0])
 
 	// init attributes
-	gl.BindVertexArray(bf.vao)
+	bindVAO(bf.vao)
 
 	// position
 	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[positionBuffer])
@@ -108,9 +109,7 @@ func newBuffers() *buffers {
 	gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
 	gl.VertexAttribDivisor(8, 1)
 
-	// unbind, we can now edit buffers without active vao binding
-	gl.BindVertexArray(0)
-
+	bindVAO(0)
 	return bf
 }
 
@@ -150,6 +149,13 @@ func (r *RenderSystem) NewIMGUIMesh() core.IMGUIMesh {
 	imguiMesh := &IMGUIMesh{r.NewMesh().(*Mesh)}
 	imguiMesh.buffers = imguiBuffers
 	return imguiMesh
+}
+
+func bindVAO(vao uint32) {
+	if currentVAO != vao {
+		gl.BindVertexArray(vao)
+		currentVAO = vao
+	}
 }
 
 // SetPrimitiveType implements the core.Mesh interface
@@ -227,15 +233,10 @@ func (m *Mesh) SetIndices(indices []uint16) {
 
 // Draw implements the core.Mesh interface
 func (m *Mesh) Draw() {
-	// bind
-	gl.BindVertexArray(m.buffers.vao)
-
+	bindVAO(m.buffers.vao)
 	gl.DrawElementsInstancedBaseVertex(
 		m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT,
 		gl.PtrOffset(int(m.indexBufferOffset)), m.instanceCount, m.indexOffset)
-
-	// unbind
-	gl.BindVertexArray(0)
 }
 
 // Draw implements the core.IMGUIMesh interface
@@ -246,7 +247,7 @@ func (m *IMGUIMesh) Draw() {
 	m.SetPositions([]float32{0.0, 0.0, 0.0})
 	m.SetIndices([]uint16{0})
 
-	gl.BindVertexArray(m.buffers.vao)
+	bindVAO(m.buffers.vao)
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.EnableVertexAttribArray(2)
@@ -290,8 +291,7 @@ func (m *IMGUIMesh) Draw() {
 
 	gl.BindTexture(gl.TEXTURE_2D, (uint32)(lastTexture))
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, lastMipmapMode)
-
-	gl.BindVertexArray(0)
+	bindVAO(0)
 }
 
 // Lt implements the core.Mesh interface
