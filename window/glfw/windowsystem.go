@@ -4,8 +4,6 @@ package glfw
 import (
 	"fmt"
 	"math"
-	"runtime"
-	"time"
 
 	"github.com/fcvarela/gosg/core"
 	"github.com/go-gl/gl/v4.1-core/gl"
@@ -125,12 +123,8 @@ func (w *WindowSystem) Start() {
 	monitor := w.cfg.Monitor.(*Monitor)
 	var err error
 
-	if w.cfg.Fullscreen && runtime.GOOS != "darwin" {
+	if w.cfg.Fullscreen {
 		w.window, err = glfw.CreateWindow(w.cfg.Width, w.cfg.Height, w.name, monitor.monitor, nil)
-	} else if w.cfg.Fullscreen && runtime.GOOS == "darwin" {
-		w.window, err = glfw.CreateWindow(w.cfg.Width/2, w.cfg.Height/2, w.name, nil, nil)
-		makeFullScreen(w.window)
-		time.Sleep(1 * time.Second)
 	} else {
 		w.window, err = glfw.CreateWindow(w.cfg.Width, w.cfg.Height, w.name, nil, nil)
 	}

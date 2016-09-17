@@ -273,11 +273,9 @@ func (i *InputManager) Reset() {
 func (i *InputManager) KeyCallback(key int, scancode int, action int, mods int) {
 	i.state.Keys.Valid = true
 
-	if action == ActionPress {
+	if action == ActionPress || action == ActionRepeat {
 		i.state.Keys.Active[key] = true
 		i.state.Keys.Released[key] = false
-	} else if action == ActionRepeat {
-		i.state.Keys.Active[key] = true
 	} else if action == ActionRelease {
 		i.state.Keys.Active[key] = false
 		i.state.Keys.Released[key] = true
