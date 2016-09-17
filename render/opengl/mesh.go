@@ -1,6 +1,8 @@
 package opengl
 
 import (
+	"unsafe"
+
 	"github.com/fcvarela/gosg/core"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl64"
@@ -15,23 +17,117 @@ const (
 	bitangentBuffer
 	texCoordBuffer
 	indexBuffer
-	boneIDBuffer
-	boneWeightBuffer
 	modelMatrixBuffer
+)
+
+type buffers struct {
+	vao           uint32
+	buffers       []uint32
+	bufferOffsets []int
+}
+
+var (
+	currentVAO = uint32(0)
+)
+
+func (b *buffers) addData(target uint32, buffer bufferType, datalen int, buf unsafe.Pointer) {
+	if b.bufferOffsets[buffer] == 0 {
+		gl.BindBuffer(target, b.buffers[buffer])
+		gl.BufferData(target, datalen, buf, gl.STATIC_DRAW)
+	} else {
+		// cpu copy: get existing data, alloc new space for everything, add old data, new data
+		cpuBuf := make([]byte, b.bufferOffsets[buffer])
+		gl.BindBuffer(target, b.buffers[buffer])
+		gl.GetBufferSubData(target, 0, b.bufferOffsets[buffer], unsafe.Pointer(&cpuBuf[0]))
+		gl.BufferData(target, datalen+b.bufferOffsets[buffer], nil, gl.STATIC_DRAW)
+		gl.BufferSubData(target, 0, b.bufferOffsets[buffer], unsafe.Pointer(&cpuBuf[0]))
+		gl.BufferSubData(target, b.bufferOffsets[buffer], datalen, buf)
+	}
+	b.bufferOffsets[buffer] += datalen
+}
+
+func newBuffers() *buffers {
+	bf := &buffers{}
+
+	// create VAO
+	gl.GenVertexArrays(1, &bf.vao)
+
+	// create buffers
+	bf.buffers = make([]uint32, modelMatrixBuffer+1)
+	bf.bufferOffsets = make([]int, modelMatrixBuffer+1)
+
+	// initialize gl buffer handles
+	gl.GenBuffers(int32(len(bf.buffers)), &bf.buffers[0])
+
+	// init attributes
+	bindVAO(bf.vao)
+
+	// position
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[positionBuffer])
+	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0, nil)
+
+	// normal
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[normalBuffer])
+	gl.EnableVertexAttribArray(1)
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 0, nil)
+
+	// tangent
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[tangentBuffer])
+	gl.EnableVertexAttribArray(2)
+	gl.VertexAttribPointer(2, 3, gl.FLOAT, false, 0, nil)
+
+	// bitangent
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[bitangentBuffer])
+	gl.EnableVertexAttribArray(3)
+	gl.VertexAttribPointer(3, 3, gl.FLOAT, false, 0, nil)
+
+	// texcoord
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[texCoordBuffer])
+	gl.EnableVertexAttribArray(4)
+	gl.VertexAttribPointer(4, 3, gl.FLOAT, false, 0, nil)
+
+	// indices
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, bf.buffers[indexBuffer])
+
+	// model matrices
+	gl.BindBuffer(gl.ARRAY_BUFFER, bf.buffers[modelMatrixBuffer])
+
+	gl.EnableVertexAttribArray(5)
+	gl.VertexAttribPointer(5, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(0*16))
+	gl.VertexAttribDivisor(5, 1)
+
+	gl.EnableVertexAttribArray(6)
+	gl.VertexAttribPointer(6, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(1*16))
+	gl.VertexAttribDivisor(6, 1)
+
+	gl.EnableVertexAttribArray(7)
+	gl.VertexAttribPointer(7, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(2*16))
+	gl.VertexAttribDivisor(7, 1)
+
+	gl.EnableVertexAttribArray(8)
+	gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
+	gl.VertexAttribDivisor(8, 1)
+
+	bindVAO(0)
+	return bf
+}
+
+var (
+	sharedBuffers *buffers
+	imguiBuffers  *buffers
 )
 
 // Mesh implements the core.Mesh interface
 type Mesh struct {
-	vao                 uint32
-	dirty               bool
-	indexcount          int32
-	instanceCount       int32
-	name                string
-	buffers             map[bufferType]uint32
-	bounds              *core.AABB
-	primitiveType       uint32
-	compileList         []func()
-	updateTransformFunc func()
+	buffers           *buffers
+	indexcount        int32
+	indexOffset       int32
+	indexBufferOffset int32
+	instanceCount     int32
+	name              string
+	bounds            *core.AABB
+	primitiveType     uint32
 }
 
 // IMGUIMesh implements the core.IMGUIMesh interface
@@ -43,39 +139,23 @@ type IMGUIMesh struct {
 func (r *RenderSystem) NewMesh() core.Mesh {
 	m := Mesh{}
 
-	m.compileList = make([]func(), 0)
 	m.bounds = core.NewAABB()
-	m.buffers = make(map[bufferType]uint32)
-
-	for i := positionBuffer; i < modelMatrixBuffer; i++ {
-		m.buffers[i] = 0
-	}
-
-	m.dirty = false
-
-	// add to compile list
-	m.compileList = append(m.compileList, func() {
-		if m.vao == 0 {
-			gl.GenVertexArrays(1, &m.vao)
-		}
-	})
-
-	m.dirty = true
+	m.buffers = sharedBuffers
 	return &m
 }
 
 // NewIMGUIMesh implements the core.RenderSystem interface
 func (r *RenderSystem) NewIMGUIMesh() core.IMGUIMesh {
-	return &IMGUIMesh{r.NewMesh().(*Mesh)}
+	imguiMesh := &IMGUIMesh{r.NewMesh().(*Mesh)}
+	imguiMesh.buffers = imguiBuffers
+	return imguiMesh
 }
 
-func (m *Mesh) compile() {
-	for _, fn := range m.compileList {
-		fn()
+func bindVAO(vao uint32) {
+	if currentVAO != vao {
+		gl.BindVertexArray(vao)
+		currentVAO = vao
 	}
-
-	m.compileList = m.compileList[:0]
-	m.dirty = false
 }
 
 // SetPrimitiveType implements the core.Mesh interface
@@ -87,11 +167,8 @@ func (m *Mesh) SetPrimitiveType(t core.PrimitiveType) {
 		m.primitiveType = gl.LINES
 	case core.PrimitiveTypePoints:
 		m.primitiveType = gl.POINTS
-		m.compileList = append(m.compileList, func() {
-			gl.Enable(gl.PROGRAM_POINT_SIZE)
-			gl.PointParameteri(gl.POINT_SPRITE_COORD_ORIGIN, gl.LOWER_LEFT)
-		})
-		m.dirty = true
+		gl.Enable(gl.PROGRAM_POINT_SIZE)
+		gl.PointParameteri(gl.POINT_SPRITE_COORD_ORIGIN, gl.LOWER_LEFT)
 	}
 }
 
@@ -112,28 +189,9 @@ func (m *Mesh) Name() string {
 
 // SetPositions implements the core.Mesh interface
 func (m *Mesh) SetPositions(positions []float32) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
-
-		buf := uint32(0)
-
-		if m.buffers[positionBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[positionBuffer] = buf
-		} else {
-			buf = m.buffers[positionBuffer]
-		}
-
-		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(positions)*4, gl.Ptr(positions), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(0)
-		gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0, nil)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-	})
+	// the index offset is equal to the number of primitives already in the position buffer
+	m.indexOffset = int32(m.buffers.bufferOffsets[positionBuffer]) / (4 * 3)
+	m.buffers.addData(gl.ARRAY_BUFFER, positionBuffer, len(positions)*4, gl.Ptr(positions))
 
 	// grow our bounds
 	for i := 0; i < len(positions); i += 3 {
@@ -143,168 +201,42 @@ func (m *Mesh) SetPositions(positions []float32) {
 			float64(positions[i+2])}
 		m.bounds.ExtendWithPoint(p)
 	}
-
-	m.dirty = true
 }
 
 // SetNormals implements the core.Mesh interface
 func (m *Mesh) SetNormals(normals []float32) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
-
-		buf := uint32(0)
-
-		if m.buffers[normalBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[normalBuffer] = buf
-		} else {
-			buf = m.buffers[normalBuffer]
-		}
-
-		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(normals)*4, gl.Ptr(normals), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(1)
-		gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 0, nil)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-	})
-
-	m.dirty = true
+	m.buffers.addData(gl.ARRAY_BUFFER, normalBuffer, len(normals)*4, gl.Ptr(normals))
 }
 
 // SetTangents implements the core.Mesh interface
 func (m *Mesh) SetTangents(tangents []float32) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
-
-		buf := uint32(0)
-
-		if m.buffers[tangentBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[tangentBuffer] = buf
-		} else {
-			buf = m.buffers[tangentBuffer]
-		}
-
-		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(tangents)*4, gl.Ptr(tangents), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(2)
-		gl.VertexAttribPointer(2, 3, gl.FLOAT, false, 0, nil)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-	})
-
-	m.dirty = true
+	m.buffers.addData(gl.ARRAY_BUFFER, tangentBuffer, len(tangents)*4, gl.Ptr(tangents))
 }
 
 // SetBitangents implements the core.Mesh interface
 func (m *Mesh) SetBitangents(bitangents []float32) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
-
-		buf := uint32(0)
-
-		if m.buffers[bitangentBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[bitangentBuffer] = buf
-		} else {
-			buf = m.buffers[bitangentBuffer]
-		}
-
-		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(bitangents)*4, gl.Ptr(bitangents), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(3)
-		gl.VertexAttribPointer(3, 3, gl.FLOAT, false, 0, nil)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-	})
-
-	m.dirty = true
+	m.buffers.addData(gl.ARRAY_BUFFER, bitangentBuffer, len(bitangents)*4, gl.Ptr(bitangents))
 }
 
 // SetTextureCoordinates implements the core.Mesh interface
-func (m *Mesh) SetTextureCoordinates(size int32, texcoords []float32) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
-
-		buf := uint32(0)
-
-		if m.buffers[texCoordBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[texCoordBuffer] = buf
-		} else {
-			buf = m.buffers[texCoordBuffer]
-		}
-
-		//4 : sizeof float32
-		gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ARRAY_BUFFER, len(texcoords)*4, gl.Ptr(texcoords), gl.STATIC_DRAW)
-
-		gl.EnableVertexAttribArray(4)
-		gl.VertexAttribPointer(4, size, gl.FLOAT, false, 0, nil)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-	})
-
-	m.dirty = true
+func (m *Mesh) SetTextureCoordinates(texcoords []float32) {
+	m.buffers.addData(gl.ARRAY_BUFFER, texCoordBuffer, len(texcoords)*4, gl.Ptr(texcoords))
 }
 
 // SetIndices implements the core.Mesh interface
 func (m *Mesh) SetIndices(indices []uint16) {
-	m.compileList = append(m.compileList, func() {
-		gl.BindVertexArray(m.vao)
+	m.indexBufferOffset = int32(m.buffers.bufferOffsets[indexBuffer])
+	m.indexcount = int32(len(indices))
 
-		buf := uint32(0)
-
-		if m.buffers[indexBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			m.buffers[indexBuffer] = buf
-		} else {
-			buf = m.buffers[indexBuffer]
-		}
-
-		//2 : sizeof uint16
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, buf)
-		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(indices)*2, gl.Ptr(indices), gl.STATIC_DRAW)
-
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-		gl.BindVertexArray(0)
-
-		m.indexcount = int32(len(indices))
-	})
-
-	m.dirty = true
+	m.buffers.addData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, len(indices)*2, gl.Ptr(indices))
 }
 
 // Draw implements the core.Mesh interface
 func (m *Mesh) Draw() {
-	if m.dirty {
-		m.compile()
-	}
-
-	// bind
-	gl.BindVertexArray(m.vao)
-
-	if m.updateTransformFunc != nil {
-		m.updateTransformFunc()
-	}
-
-	// draw call
-	gl.DrawElementsInstanced(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount)
-	//gl.DrawElementsInstancedBaseVertexBaseInstance(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount, 0, 0)
-
-	// unbind
-	gl.BindVertexArray(0)
+	bindVAO(m.buffers.vao)
+	gl.DrawElementsInstancedBaseVertex(
+		m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT,
+		gl.PtrOffset(int(m.indexBufferOffset)), m.instanceCount, m.indexOffset)
 }
 
 // Draw implements the core.IMGUIMesh interface
@@ -315,24 +247,24 @@ func (m *IMGUIMesh) Draw() {
 	m.SetPositions([]float32{0.0, 0.0, 0.0})
 	m.SetIndices([]uint16{0})
 
-	m.compile()
-
-	gl.BindVertexArray(m.vao)
+	bindVAO(m.buffers.vao)
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 	gl.EnableVertexAttribArray(2)
 
 	var lastTexture int32
+	var lastMipmapMode int32
 	gl.GetIntegerv(gl.TEXTURE_BINDING_2D, &lastTexture)
+	gl.GetIntegerv(gl.TEXTURE_MIN_FILTER, &lastMipmapMode)
 	gl.ActiveTexture(gl.TEXTURE0)
 
 	for i := 0; i < drawData.CommandListCount(); i++ {
 		cmdlist := drawData.GetCommandList(i)
 
-		gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers[positionBuffer])
+		gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[positionBuffer])
 		gl.BufferData(gl.ARRAY_BUFFER, cmdlist.VertexBufferSize*5*4, cmdlist.VertexPointer, gl.STREAM_DRAW)
 
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.buffers[indexBuffer])
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, m.buffers.buffers[indexBuffer])
 		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, cmdlist.IndexBufferSize*2, cmdlist.IndexPointer, gl.STREAM_DRAW)
 
 		// position = 0, tcoords = 1, normals/color = 2
@@ -340,12 +272,11 @@ func (m *IMGUIMesh) Draw() {
 		gl.VertexAttribPointer(1, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(8))
 		gl.VertexAttribPointer(2, 4, gl.UNSIGNED_BYTE, true, 5*4, gl.PtrOffset(16))
 
-		m.compile()
-
 		var elementIndex int
 		for _, cmd := range cmdlist.Commands {
 			if tex := (*Texture)(cmd.TextureID); tex != nil {
 				gl.BindTexture(gl.TEXTURE_2D, tex.ID)
+				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 			}
 
 			gl.Scissor(
@@ -359,18 +290,18 @@ func (m *IMGUIMesh) Draw() {
 	}
 
 	gl.BindTexture(gl.TEXTURE_2D, (uint32)(lastTexture))
-
-	gl.BindVertexArray(0)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, lastMipmapMode)
+	bindVAO(0)
 }
 
 // Lt implements the core.Mesh interface
 func (m *Mesh) Lt(other core.Mesh) bool {
-	return m.vao < other.(*Mesh).vao
+	return m.buffers.vao < other.(*Mesh).buffers.vao
 }
 
 // Gt implements the core.Mesh interface
 func (m *Mesh) Gt(other core.Mesh) bool {
-	return m.vao > other.(*Mesh).vao
+	return m.buffers.vao > other.(*Mesh).buffers.vao
 }
 
 // SetInstanceCount implements the core.InstancedMesh interface
@@ -380,37 +311,7 @@ func (m *Mesh) SetInstanceCount(count int) {
 
 // SetModelMatrices implements the core.InstancedMesh interface
 func (m *Mesh) SetModelMatrices(matrices []float32) {
-	m.updateTransformFunc = func() {
-
-		buf := uint32(0)
-
-		if m.buffers[modelMatrixBuffer] == 0 {
-			gl.GenBuffers(1, &buf)
-			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-
-			gl.EnableVertexAttribArray(5)
-			gl.VertexAttribPointer(5, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(0*16))
-			gl.VertexAttribDivisor(5, 1)
-
-			gl.EnableVertexAttribArray(6)
-			gl.VertexAttribPointer(6, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(1*16))
-			gl.VertexAttribDivisor(6, 1)
-
-			gl.EnableVertexAttribArray(7)
-			gl.VertexAttribPointer(7, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(2*16))
-			gl.VertexAttribDivisor(7, 1)
-
-			gl.EnableVertexAttribArray(8)
-			gl.VertexAttribPointer(8, 4, gl.FLOAT, false, 16*4, gl.PtrOffset(3*16))
-			gl.VertexAttribDivisor(8, 1)
-
-			m.buffers[modelMatrixBuffer] = buf
-		} else {
-			buf = m.buffers[modelMatrixBuffer]
-			gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-		}
-
-		gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(&matrices[0]), gl.STATIC_DRAW)
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-	}
+	gl.BindBuffer(gl.ARRAY_BUFFER, m.buffers.buffers[modelMatrixBuffer])
+	gl.BufferData(gl.ARRAY_BUFFER, len(matrices)*4, gl.Ptr(&matrices[0]), gl.STATIC_DRAW)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 }

@@ -1,8 +1,6 @@
 package opengl
 
 import (
-	"time"
-
 	"github.com/fcvarela/gosg/core"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/golang/glog"
@@ -10,13 +8,7 @@ import (
 
 // RenderSystem implements the core.RenderSystem interface
 type RenderSystem struct {
-	lastPassMeshCount int
-	timerQuery        uint32
-	waitingResult     bool
-	frameDuration     time.Duration
-	cpuDuration       time.Duration
-	startTime         float64
-	renderLog         string
+	renderLog string
 }
 
 func init() {
@@ -25,7 +17,7 @@ func init() {
 
 // New returns a new RenderSystem
 func New() *RenderSystem {
-	r := RenderSystem{waitingResult: false}
+	r := RenderSystem{}
 	return &r
 }
 
@@ -43,52 +35,9 @@ func (r *RenderSystem) Start() {
 	currentMaterial = clearMaterial
 	bindMaterialState(nil, clearMaterial, true)
 
-	// create timers
-	gl.GenQueries(1, &r.timerQuery)
-}
-
-// StartTimer implements the core.RenderSystem interface
-func (r *RenderSystem) StartTimer() {
-	if r.waitingResult {
-		return
-	}
-
-	gl.BeginQuery(gl.TIME_ELAPSED, r.timerQuery)
-	r.startTime = core.GetTimerManager().GetTime()
-	r.renderLog = ""
-}
-
-// EndTimer implements the core.RenderSystem interface
-func (r *RenderSystem) EndTimer() {
-	if !r.waitingResult {
-		gl.EndQuery(gl.TIME_ELAPSED)
-		cpuDuration := uint64((core.GetTimerManager().GetTime() - r.startTime) * 1E9)
-		r.cpuDuration = time.Duration(cpuDuration)
-	}
-
-	r.waitingResult = true
-	var timerResultReady int32
-	gl.GetQueryObjectiv(r.timerQuery, gl.QUERY_RESULT_AVAILABLE, &timerResultReady)
-	if timerResultReady == 0 {
-		return
-	}
-
-	var timerResult uint32
-	gl.GetQueryObjectuiv(r.timerQuery, gl.QUERY_RESULT, &timerResult)
-
-	r.waitingResult = false
-	// both gl and durations use nanoseconds as base unit
-	r.frameDuration = time.Duration(timerResult)
-}
-
-// RenderTime implements the core.RenderSystem interface
-func (r *RenderSystem) RenderTime() time.Duration {
-	return r.frameDuration
-}
-
-// CPUTime implements the core.RenderSystem interface
-func (r *RenderSystem) CPUTime() time.Duration {
-	return r.cpuDuration
+	// generate basic mesh buffers
+	sharedBuffers = newBuffers()
+	imguiBuffers = newBuffers()
 }
 
 // Stop implements the core.RenderSystem interface

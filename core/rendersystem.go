@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/fcvarela/gosg/protos"
 )
@@ -51,12 +50,6 @@ type RenderSystem interface {
 
 	// ExecuteRenderPlan issues the actual drawing commands to the 3D api
 	ExecuteRenderPlan(p RenderPlan)
-
-	// The following are performance measuring. They will be moved to a generalized CPU/GPU timer
-	StartTimer()
-	EndTimer()
-	RenderTime() time.Duration
-	CPUTime() time.Duration
 
 	// RenderLog returns a log of the render plan
 	RenderLog() string
