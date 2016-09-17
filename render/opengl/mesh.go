@@ -32,26 +32,13 @@ func (b *buffers) addData(target uint32, buffer bufferType, datalen int, buf uns
 		gl.BindBuffer(target, b.buffers[buffer])
 		gl.BufferData(target, datalen, buf, gl.STATIC_DRAW)
 	} else {
-		// create new buffer with total size
-		var newBuf uint32
-		gl.GenBuffers(1, &newBuf)
-		gl.BindBuffer(target, newBuf)
+		// cpu copy: get existing data, alloc new space for everything, add old data, new data
+		cpuBuf := make([]byte, b.bufferOffsets[buffer])
+		gl.BindBuffer(target, b.buffers[buffer])
+		gl.GetBufferSubData(target, 0, b.bufferOffsets[buffer], unsafe.Pointer(&cpuBuf[0]))
 		gl.BufferData(target, datalen+b.bufferOffsets[buffer], nil, gl.STATIC_DRAW)
-
-		// bind read, write then copy existing data to new buffer
-		gl.BindBuffer(gl.COPY_READ_BUFFER, b.buffers[buffer])
-		gl.BindBuffer(gl.COPY_WRITE_BUFFER, newBuf)
-		gl.CopyBufferSubData(gl.COPY_READ_BUFFER, gl.COPY_WRITE_BUFFER, 0, 0, b.bufferOffsets[buffer])
-
-		// unbind read, write
-		gl.BindBuffer(gl.COPY_READ_BUFFER, 0)
-		gl.BindBuffer(gl.COPY_WRITE_BUFFER, 0)
-
-		// set new data
+		gl.BufferSubData(target, 0, b.bufferOffsets[buffer], unsafe.Pointer(&cpuBuf[0]))
 		gl.BufferSubData(target, b.bufferOffsets[buffer], datalen, buf)
-
-		// set new buffer
-		b.buffers[buffer] = newBuf
 	}
 	gl.BindVertexArray(0)
 
@@ -134,15 +121,14 @@ var (
 
 // Mesh implements the core.Mesh interface
 type Mesh struct {
-	buffers             *buffers
-	indexcount          int32
-	indexOffset         int32
-	instanceCount       int32
-	name                string
-	bounds              *core.AABB
-	primitiveType       uint32
-	compileList         []func()
-	updateTransformFunc func()
+	buffers           *buffers
+	indexcount        int32
+	indexOffset       int32
+	indexBufferOffset int32
+	instanceCount     int32
+	name              string
+	bounds            *core.AABB
+	primitiveType     uint32
 }
 
 // IMGUIMesh implements the core.IMGUIMesh interface
@@ -154,9 +140,8 @@ type IMGUIMesh struct {
 func (r *RenderSystem) NewMesh() core.Mesh {
 	m := Mesh{}
 
-	m.compileList = make([]func(), 0)
 	m.bounds = core.NewAABB()
-	m.buffers = newBuffers() // sharedBuffers
+	m.buffers = sharedBuffers
 	return &m
 }
 
@@ -198,6 +183,8 @@ func (m *Mesh) Name() string {
 
 // SetPositions implements the core.Mesh interface
 func (m *Mesh) SetPositions(positions []float32) {
+	// the index offset is equal to the number of primitives already in the position buffer
+	m.indexOffset = int32(m.buffers.bufferOffsets[positionBuffer]) / (4 * 3)
 	m.buffers.addData(gl.ARRAY_BUFFER, positionBuffer, len(positions)*4, gl.Ptr(positions))
 
 	// grow our bounds
@@ -232,8 +219,7 @@ func (m *Mesh) SetTextureCoordinates(texcoords []float32) {
 
 // SetIndices implements the core.Mesh interface
 func (m *Mesh) SetIndices(indices []uint16) {
-	// indexOffset is equal to the number of vertices already in the buffer, 3 floats vs 4 bytes each
-	//m.indexOffset = int32(m.buffers.bufferOffsets[positionBuffer]) / 4 * 3
+	m.indexBufferOffset = int32(m.buffers.bufferOffsets[indexBuffer])
 	m.indexcount = int32(len(indices))
 
 	m.buffers.addData(gl.ELEMENT_ARRAY_BUFFER, indexBuffer, len(indices)*2, gl.Ptr(indices))
@@ -244,12 +230,9 @@ func (m *Mesh) Draw() {
 	// bind
 	gl.BindVertexArray(m.buffers.vao)
 
-	if m.updateTransformFunc != nil {
-		m.updateTransformFunc()
-	}
-
-	// draw call
-	gl.DrawElementsInstancedBaseVertex(m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT, nil, m.instanceCount, 0)
+	gl.DrawElementsInstancedBaseVertex(
+		m.primitiveType, m.indexcount, gl.UNSIGNED_SHORT,
+		gl.PtrOffset(int(m.indexBufferOffset)), m.instanceCount, m.indexOffset)
 
 	// unbind
 	gl.BindVertexArray(0)
