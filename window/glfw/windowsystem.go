@@ -193,9 +193,11 @@ func (w *WindowSystem) Step() {
 	w.window.SwapBuffers()
 
 	// reset input state before callbacks
-
 	core.GetInputManager().Reset()
-	glfw.PollEvents() // fixme: this is a hack for shadow events on linux
+}
+
+func (w *WindowSystem) PollEvents() {
+	glfw.PollEvents()
 }
 
 // Stop implements the core.WindowSystem interface
