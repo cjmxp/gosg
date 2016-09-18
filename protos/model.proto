@@ -10,12 +10,10 @@ message Mesh {
     bytes bitangents = 5;
     bytes tcoords = 6;
     string material = 9;
-    bytes ambient_color = 10;
-    bytes diffuse_color = 11;
-    bytes specular_color = 12;
-    bytes diffuse_map = 14;
-    bytes normal_map = 15;
-    string name = 17;
+    bytes albedo_map = 10;
+    bytes normal_map = 11;
+    bytes rough_metal_map = 12;
+    string name = 13;
 }
 
 message Model {

@@ -8,6 +8,6 @@
     "nodeBlock": 1
   },
   "samplerBindings:": {
-    "diffuseTex": 0
+    "colorTex": 0
   }
 }

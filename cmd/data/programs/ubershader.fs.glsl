@@ -1,12 +1,10 @@
-#version 330 core
+#version 410 core
 
 // global uniforms
 struct light {
     mat4 vpMatrix;
     vec4 position;
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+    vec4 color;
 };
 
 layout (std140) uniform cameraConstants {
@@ -24,8 +22,9 @@ in mat3 tbn;
 
 layout (location = 0) out vec4 color;
 
-uniform sampler2D diffuseTex;
+uniform sampler2D albedoTex;
 uniform sampler2D normalTex;
+uniform sampler2D roughMetalTex;
 uniform sampler2D shadowTex;
 
 float shadowMap(vec2 coords, float compare) {
@@ -85,9 +84,6 @@ const float E = 0.02;
 const float F = 0.30;
 const float W = 11.2;
 
-const float PI = 3.14159265358979323846;
-const float INV_PI = 1.0/PI;
-
 vec3 Uncharted2Tonemap(vec3 x) {
    return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
 }
@@ -133,7 +129,7 @@ void main() {
     color.rgb = vec3(0.0);
 
     // init materials
-    vec4 albedo = texture(diffuseTex, tcoords0.st);
+    vec4 albedo = texture(albedoTex, tcoords0.st);
 
     // will come from textures later
     float metalness = 0.0;
@@ -165,8 +161,8 @@ void main() {
 
         float brdf_spec = (0.25 * fres * geom * ndf) / (NdotL_clamped * NdotV_clamped);
 
-        vec3 color_spec = NdotL_clamped * brdf_spec * lights[i].diffuse.rgb;
-        vec3 color_diff = NdotL_clamped * diffuse_energy_ratio(f0, N, L) * albedo.rgb * lights[i].diffuse.rgb;
+        vec3 color_spec = NdotL_clamped * brdf_spec * lights[i].color.rgb;
+        vec3 color_diff = NdotL_clamped * diffuse_energy_ratio(f0, N, L) * albedo.rgb * lights[i].color.rgb;
         color.rgb += (color_diff + color_spec) * shadow(lights[i].vpMatrix * vec4(position, 1.0), dot(N, L));
     }
 

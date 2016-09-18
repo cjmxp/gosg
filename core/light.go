@@ -7,9 +7,7 @@ import "github.com/go-gl/mathgl/mgl32"
 type LightBlock struct {
 	VPMatrix mgl32.Mat4
 	Position mgl32.Vec4
-	Ambient  mgl32.Vec4
-	Diffuse  mgl32.Vec4
-	Specular mgl32.Vec4
+	Color    mgl32.Vec4
 }
 
 // Light represents a light. It contains a properties block and an optional shadower.

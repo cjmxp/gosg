@@ -8,8 +8,9 @@
     "nodeBlock": 1
   },
   "samplerBindings": {
-    "diffuseTex": 0,
+    "albedoTex": 0,
     "normalTex": 1,
-    "shadowTex": 2
+    "roughMetalTex": 2,
+    "shadowTex": 3
   }
 }

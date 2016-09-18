@@ -1,12 +1,10 @@
-#version 330 core
+#version 410 core
 
 // global uniforms
 struct light {
     mat4 vpMatrix;
     vec4 position;
-    vec4 ambient;
-    vec4 diffuse;
-    vec4 specular;
+    vec4 color;
 };
 
 layout (std140) uniform cameraConstants {

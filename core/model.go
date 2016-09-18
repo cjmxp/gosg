@@ -29,7 +29,7 @@ func LoadModel(name string, res []byte) *Node {
 
 		// get textures
 		if len(model.Meshes[i].DiffuseMap) > 0 {
-			node.MaterialData().SetTexture("diffuseTex", renderSystem.NewTexture(model.Meshes[i].DiffuseMap))
+			node.MaterialData().SetTexture("albedoTex", renderSystem.NewTexture(model.Meshes[i].DiffuseMap))
 		}
 
 		if len(model.Meshes[i].NormalMap) > 0 {

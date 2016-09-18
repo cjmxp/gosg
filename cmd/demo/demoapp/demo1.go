@@ -52,9 +52,7 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 		Block: core.LightBlock{
 			// position is only used to determine light type (w component)
 			Position: mgl32.Vec4{0.0, 0.0, 0.0, 1.0},
-			Ambient:  mgl32.Vec4{0.0, 0.0, 0.0, 1.0},
-			Diffuse:  mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
-			Specular: mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
+			Color:    mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
 		},
 		Shadower: shadowMap,
 	}
