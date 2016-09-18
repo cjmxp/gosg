@@ -148,7 +148,7 @@ void main() {
 
     // shared products
     float NdotV = dot(N, V);
-    float NdotV_clamped = max(NdotV, 0.0);
+    float NdotV_clamped = max(NdotV, 0.0000000001);
 
     int lc = int(lightCount[0]);
     for (int i=0; i<lc; i++) {
