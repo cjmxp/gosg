@@ -118,7 +118,7 @@ func (w *WindowSystem) Start() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	glfw.WindowHint(glfw.Samples, 16)
+	glfw.WindowHint(glfw.Samples, 0)
 
 	monitor := w.cfg.Monitor.(*Monitor)
 	var err error
