@@ -537,6 +537,7 @@ void Mesh::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* Mesh::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
   // @@protoc_insertion_point(serialize_to_array_start:protos.Mesh)
   // optional bytes indices = 1;
   if (this->indices().size() > 0) {
@@ -1511,6 +1512,7 @@ void Model::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* Model::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
   // @@protoc_insertion_point(serialize_to_array_start:protos.Model)
   // repeated .protos.Mesh meshes = 1;
   for (unsigned int i = 0, n = this->meshes_size(); i < n; i++) {

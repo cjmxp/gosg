@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
         mesh->set_name(scene->mMeshes[i]->mName.data);
         std::cerr << "Processing mesh: " << mesh->name() << std::endl;
 
-        // set buffers
+		// set buffers
         mesh->set_positions(scene->mMeshes[i]->mVertices, sizeof(float)*vertexCount*3);
         mesh->set_normals(scene->mMeshes[i]->mNormals, sizeof(float)*vertexCount*3);
         mesh->set_tangents(scene->mMeshes[i]->mTangents, sizeof(float)*vertexCount*3);
@@ -88,27 +88,27 @@ int main(int argc, char **argv) {
         std::cerr << "Mesh state: " << mesh->state() << std::endl;
 
         if (albedoPath.length > 0) {
+            std::cerr << "Mesh albedo: " << albedoPath.data << std::endl;
             auto fullAlbedoPath = base_directory + "/" + std::string(albedoPath.data);
             mesh->set_albedo_map(load_texture(fullAlbedoPath));
-            std::cerr << "Mesh albedo: " << albedoPath.data << std::endl;
         }
 
         if (normalPath.length > 0) {
+            std::cerr << "Mesh normal: " << normalPath.data << std::endl;
             auto fullNormalPath = base_directory + "/" + std::string(normalPath.data);
             mesh->set_normal_map(load_texture(fullNormalPath));
-            std::cerr << "Mesh normal: " << normalPath.data << std::endl;
         }
 
         if (roughPath.length > 0) {
+            std::cerr << "Mesh rough: " << roughPath.data << std::endl;
             auto fullRoughPath = base_directory + "/" + std::string(roughPath.data);
             mesh->set_rough_map(load_texture(fullRoughPath));
-            std::cerr << "Mesh rough: " << roughPath.data << std::endl;
         }
 
         if (metalPath.length > 0) {
+            std::cerr << "Mesh metal: " << metalPath.data << std::endl;
             auto fullMetalPath = base_directory + "/" + std::string(metalPath.data);
             mesh->set_metal_map(load_texture(fullMetalPath));
-            std::cerr << "Mesh metal: " << metalPath.data << std::endl;
         }
     }
 
@@ -131,6 +131,7 @@ std::string load_texture(std::string fullpath) {
     std::streamsize textureSize = textureFile.tellg();
     textureFile.seekg(0, std::ios::beg);
 
+    std::cerr << "Allocating texture buffer with " << textureSize << " bytes" << std::endl;
     char *buffer = new char[textureSize];
     textureFile.read(buffer, textureSize);
     textureFile.close();
