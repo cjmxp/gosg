@@ -96,12 +96,6 @@ _testmain.go
 cmd/demo/demo
 cmd/demo/debug
 cme/demo/Demo.app
-cmd/vaalbara/vaalbara
-cmd/vaalbara/debug
-cmd/vaalbara/Vaalbara.app
-cmd/galaxymaker/galaxymaker
-cmd/galaxymaker/debug
-cmd/galaxymaker/GalaxyMaker.app
-cmd/modelimport/modelimport
+cmd/modelimporter/modelimporter
 *.icns
 
