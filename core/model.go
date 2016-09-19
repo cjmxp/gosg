@@ -28,12 +28,16 @@ func LoadModel(name string, res []byte) *Node {
 		node.material = resourceManager.Material(model.Meshes[i].Material)
 
 		// get textures
-		if len(model.Meshes[i].DiffuseMap) > 0 {
-			node.MaterialData().SetTexture("albedoTex", renderSystem.NewTexture(model.Meshes[i].DiffuseMap))
+		if len(model.Meshes[i].AlbedoMap) > 0 {
+			node.MaterialData().SetTexture("albedoTex", renderSystem.NewTexture(model.Meshes[i].AlbedoMap))
 		}
 
 		if len(model.Meshes[i].NormalMap) > 0 {
 			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
+		}
+
+		if len(model.Meshes[i].RoughMetalMap) > 0 {
+			node.MaterialData().SetTexture("roughMetalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
 		}
 
 		// set mesh data

@@ -18,7 +18,6 @@ int main(int argc, char **argv) {
     // copy modelfile
     std::string modelfile = std::string(argv[1]);
     auto base_directory = modelfile.substr(0, modelfile.find_last_of("/\\"));
-    std::cerr << base_directory <<std::endl;
 
     // set our global options. this will change
     auto opts = 0 |
@@ -52,7 +51,6 @@ int main(int argc, char **argv) {
 
         // set name
         mesh->set_name(scene->mMeshes[i]->mName.data);
-        std::cerr << "Name: " << mesh->name() << std::endl;
 
         // set buffers
         mesh->set_positions(scene->mMeshes[i]->mVertices, sizeof(float)*vertexCount*3);
