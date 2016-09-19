@@ -178,53 +178,20 @@ class Mesh : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_material();
   void set_allocated_material(::std::string* material);
 
-  // optional bytes ambient_color = 10;
-  void clear_ambient_color();
-  static const int kAmbientColorFieldNumber = 10;
-  const ::std::string& ambient_color() const;
-  void set_ambient_color(const ::std::string& value);
-  void set_ambient_color(const char* value);
-  void set_ambient_color(const void* value, size_t size);
-  ::std::string* mutable_ambient_color();
-  ::std::string* release_ambient_color();
-  void set_allocated_ambient_color(::std::string* ambient_color);
+  // optional bytes albedo_map = 10;
+  void clear_albedo_map();
+  static const int kAlbedoMapFieldNumber = 10;
+  const ::std::string& albedo_map() const;
+  void set_albedo_map(const ::std::string& value);
+  void set_albedo_map(const char* value);
+  void set_albedo_map(const void* value, size_t size);
+  ::std::string* mutable_albedo_map();
+  ::std::string* release_albedo_map();
+  void set_allocated_albedo_map(::std::string* albedo_map);
 
-  // optional bytes diffuse_color = 11;
-  void clear_diffuse_color();
-  static const int kDiffuseColorFieldNumber = 11;
-  const ::std::string& diffuse_color() const;
-  void set_diffuse_color(const ::std::string& value);
-  void set_diffuse_color(const char* value);
-  void set_diffuse_color(const void* value, size_t size);
-  ::std::string* mutable_diffuse_color();
-  ::std::string* release_diffuse_color();
-  void set_allocated_diffuse_color(::std::string* diffuse_color);
-
-  // optional bytes specular_color = 12;
-  void clear_specular_color();
-  static const int kSpecularColorFieldNumber = 12;
-  const ::std::string& specular_color() const;
-  void set_specular_color(const ::std::string& value);
-  void set_specular_color(const char* value);
-  void set_specular_color(const void* value, size_t size);
-  ::std::string* mutable_specular_color();
-  ::std::string* release_specular_color();
-  void set_allocated_specular_color(::std::string* specular_color);
-
-  // optional bytes diffuse_map = 14;
-  void clear_diffuse_map();
-  static const int kDiffuseMapFieldNumber = 14;
-  const ::std::string& diffuse_map() const;
-  void set_diffuse_map(const ::std::string& value);
-  void set_diffuse_map(const char* value);
-  void set_diffuse_map(const void* value, size_t size);
-  ::std::string* mutable_diffuse_map();
-  ::std::string* release_diffuse_map();
-  void set_allocated_diffuse_map(::std::string* diffuse_map);
-
-  // optional bytes normal_map = 15;
+  // optional bytes normal_map = 11;
   void clear_normal_map();
-  static const int kNormalMapFieldNumber = 15;
+  static const int kNormalMapFieldNumber = 11;
   const ::std::string& normal_map() const;
   void set_normal_map(const ::std::string& value);
   void set_normal_map(const char* value);
@@ -233,9 +200,20 @@ class Mesh : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_normal_map();
   void set_allocated_normal_map(::std::string* normal_map);
 
-  // optional string name = 17;
+  // optional bytes rough_metal_map = 12;
+  void clear_rough_metal_map();
+  static const int kRoughMetalMapFieldNumber = 12;
+  const ::std::string& rough_metal_map() const;
+  void set_rough_metal_map(const ::std::string& value);
+  void set_rough_metal_map(const char* value);
+  void set_rough_metal_map(const void* value, size_t size);
+  ::std::string* mutable_rough_metal_map();
+  ::std::string* release_rough_metal_map();
+  void set_allocated_rough_metal_map(::std::string* rough_metal_map);
+
+  // optional string name = 13;
   void clear_name();
-  static const int kNameFieldNumber = 17;
+  static const int kNameFieldNumber = 13;
   const ::std::string& name() const;
   void set_name(const ::std::string& value);
   void set_name(const char* value);
@@ -256,11 +234,9 @@ class Mesh : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::google::protobuf::internal::ArenaStringPtr bitangents_;
   ::google::protobuf::internal::ArenaStringPtr tcoords_;
   ::google::protobuf::internal::ArenaStringPtr material_;
-  ::google::protobuf::internal::ArenaStringPtr ambient_color_;
-  ::google::protobuf::internal::ArenaStringPtr diffuse_color_;
-  ::google::protobuf::internal::ArenaStringPtr specular_color_;
-  ::google::protobuf::internal::ArenaStringPtr diffuse_map_;
+  ::google::protobuf::internal::ArenaStringPtr albedo_map_;
   ::google::protobuf::internal::ArenaStringPtr normal_map_;
+  ::google::protobuf::internal::ArenaStringPtr rough_metal_map_;
   ::google::protobuf::internal::ArenaStringPtr name_;
   mutable int _cached_size_;
   friend void  protobuf_AddDesc_model_2eproto();
@@ -674,183 +650,51 @@ inline void Mesh::set_allocated_material(::std::string* material) {
   // @@protoc_insertion_point(field_set_allocated:protos.Mesh.material)
 }
 
-// optional bytes ambient_color = 10;
-inline void Mesh::clear_ambient_color() {
-  ambient_color_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// optional bytes albedo_map = 10;
+inline void Mesh::clear_albedo_map() {
+  albedo_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Mesh::ambient_color() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.ambient_color)
-  return ambient_color_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline const ::std::string& Mesh::albedo_map() const {
+  // @@protoc_insertion_point(field_get:protos.Mesh.albedo_map)
+  return albedo_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Mesh::set_ambient_color(const ::std::string& value) {
+inline void Mesh::set_albedo_map(const ::std::string& value) {
   
-  ambient_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.ambient_color)
+  albedo_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protos.Mesh.albedo_map)
 }
-inline void Mesh::set_ambient_color(const char* value) {
+inline void Mesh::set_albedo_map(const char* value) {
   
-  ambient_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.ambient_color)
+  albedo_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protos.Mesh.albedo_map)
 }
-inline void Mesh::set_ambient_color(const void* value, size_t size) {
+inline void Mesh::set_albedo_map(const void* value, size_t size) {
   
-  ambient_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  albedo_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.ambient_color)
+  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.albedo_map)
 }
-inline ::std::string* Mesh::mutable_ambient_color() {
+inline ::std::string* Mesh::mutable_albedo_map() {
   
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.ambient_color)
-  return ambient_color_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:protos.Mesh.albedo_map)
+  return albedo_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Mesh::release_ambient_color() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.ambient_color)
+inline ::std::string* Mesh::release_albedo_map() {
+  // @@protoc_insertion_point(field_release:protos.Mesh.albedo_map)
   
-  return ambient_color_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  return albedo_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Mesh::set_allocated_ambient_color(::std::string* ambient_color) {
-  if (ambient_color != NULL) {
+inline void Mesh::set_allocated_albedo_map(::std::string* albedo_map) {
+  if (albedo_map != NULL) {
     
   } else {
     
   }
-  ambient_color_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ambient_color);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.ambient_color)
+  albedo_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), albedo_map);
+  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.albedo_map)
 }
 
-// optional bytes diffuse_color = 11;
-inline void Mesh::clear_diffuse_color() {
-  diffuse_color_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Mesh::diffuse_color() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.diffuse_color)
-  return diffuse_color_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_diffuse_color(const ::std::string& value) {
-  
-  diffuse_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.diffuse_color)
-}
-inline void Mesh::set_diffuse_color(const char* value) {
-  
-  diffuse_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.diffuse_color)
-}
-inline void Mesh::set_diffuse_color(const void* value, size_t size) {
-  
-  diffuse_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.diffuse_color)
-}
-inline ::std::string* Mesh::mutable_diffuse_color() {
-  
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.diffuse_color)
-  return diffuse_color_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Mesh::release_diffuse_color() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.diffuse_color)
-  
-  return diffuse_color_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_allocated_diffuse_color(::std::string* diffuse_color) {
-  if (diffuse_color != NULL) {
-    
-  } else {
-    
-  }
-  diffuse_color_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), diffuse_color);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.diffuse_color)
-}
-
-// optional bytes specular_color = 12;
-inline void Mesh::clear_specular_color() {
-  specular_color_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Mesh::specular_color() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.specular_color)
-  return specular_color_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_specular_color(const ::std::string& value) {
-  
-  specular_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.specular_color)
-}
-inline void Mesh::set_specular_color(const char* value) {
-  
-  specular_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.specular_color)
-}
-inline void Mesh::set_specular_color(const void* value, size_t size) {
-  
-  specular_color_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.specular_color)
-}
-inline ::std::string* Mesh::mutable_specular_color() {
-  
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.specular_color)
-  return specular_color_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Mesh::release_specular_color() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.specular_color)
-  
-  return specular_color_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_allocated_specular_color(::std::string* specular_color) {
-  if (specular_color != NULL) {
-    
-  } else {
-    
-  }
-  specular_color_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), specular_color);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.specular_color)
-}
-
-// optional bytes diffuse_map = 14;
-inline void Mesh::clear_diffuse_map() {
-  diffuse_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Mesh::diffuse_map() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.diffuse_map)
-  return diffuse_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_diffuse_map(const ::std::string& value) {
-  
-  diffuse_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.diffuse_map)
-}
-inline void Mesh::set_diffuse_map(const char* value) {
-  
-  diffuse_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.diffuse_map)
-}
-inline void Mesh::set_diffuse_map(const void* value, size_t size) {
-  
-  diffuse_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.diffuse_map)
-}
-inline ::std::string* Mesh::mutable_diffuse_map() {
-  
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.diffuse_map)
-  return diffuse_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Mesh::release_diffuse_map() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.diffuse_map)
-  
-  return diffuse_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Mesh::set_allocated_diffuse_map(::std::string* diffuse_map) {
-  if (diffuse_map != NULL) {
-    
-  } else {
-    
-  }
-  diffuse_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), diffuse_map);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.diffuse_map)
-}
-
-// optional bytes normal_map = 15;
+// optional bytes normal_map = 11;
 inline void Mesh::clear_normal_map() {
   normal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -894,7 +738,51 @@ inline void Mesh::set_allocated_normal_map(::std::string* normal_map) {
   // @@protoc_insertion_point(field_set_allocated:protos.Mesh.normal_map)
 }
 
-// optional string name = 17;
+// optional bytes rough_metal_map = 12;
+inline void Mesh::clear_rough_metal_map() {
+  rough_metal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& Mesh::rough_metal_map() const {
+  // @@protoc_insertion_point(field_get:protos.Mesh.rough_metal_map)
+  return rough_metal_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Mesh::set_rough_metal_map(const ::std::string& value) {
+  
+  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protos.Mesh.rough_metal_map)
+}
+inline void Mesh::set_rough_metal_map(const char* value) {
+  
+  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protos.Mesh.rough_metal_map)
+}
+inline void Mesh::set_rough_metal_map(const void* value, size_t size) {
+  
+  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.rough_metal_map)
+}
+inline ::std::string* Mesh::mutable_rough_metal_map() {
+  
+  // @@protoc_insertion_point(field_mutable:protos.Mesh.rough_metal_map)
+  return rough_metal_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Mesh::release_rough_metal_map() {
+  // @@protoc_insertion_point(field_release:protos.Mesh.rough_metal_map)
+  
+  return rough_metal_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Mesh::set_allocated_rough_metal_map(::std::string* rough_metal_map) {
+  if (rough_metal_map != NULL) {
+    
+  } else {
+    
+  }
+  rough_metal_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), rough_metal_map);
+  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.rough_metal_map)
+}
+
+// optional string name = 13;
 inline void Mesh::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }

@@ -77,46 +77,19 @@ int main(int argc, char **argv) {
         aiGetMaterialString(mat, AI_MATKEY_NAME, &materialName);
         mesh->set_material(materialName.data);
 
-        struct aiString diffusePath, normalPath;
-        aiGetMaterialString(mat, AI_MATKEY_TEXTURE_DIFFUSE(0), &diffusePath);
+        struct aiString albedoPath, normalPath;
+        aiGetMaterialString(mat, AI_MATKEY_TEXTURE_DIFFUSE(0), &albedoPath);
         aiGetMaterialString(mat, AI_MATKEY_TEXTURE_HEIGHT(0), &normalPath);
 
-        if (diffusePath.length > 0) {
-            auto fullDiffusePath = base_directory + "/" + std::string(diffusePath.data);
-            mesh->set_diffuse_map(load_texture(fullDiffusePath));
+        if (albedoPath.length > 0) {
+            auto fullAlbedoPath = base_directory + "/" + std::string(albedoPath.data);
+            mesh->set_albedo_map(load_texture(fullAlbedoPath));
         }
 
         if (normalPath.length > 0) {
             auto fullNormalPath = base_directory + "/" + std::string(normalPath.data);
             mesh->set_normal_map(load_texture(fullNormalPath));
         }
-
-        // colors
-        aiColor4D diffuseColorD, ambientColorD, specularColorD;
-        float diffuseColor[4], ambientColor[4], specularColor[4];
-
-        aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &diffuseColorD);
-        aiGetMaterialColor(mat, AI_MATKEY_COLOR_AMBIENT, &ambientColorD);
-        aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &specularColorD);
-
-        diffuseColor[0] = diffuseColorD.r;
-        diffuseColor[1] = diffuseColorD.g;
-        diffuseColor[2] = diffuseColorD.b;
-        diffuseColor[3] = diffuseColorD.a;
-
-        ambientColor[0] = ambientColorD.r;
-        ambientColor[1] = ambientColorD.g;
-        ambientColor[2] = ambientColorD.b;
-        ambientColor[3] = ambientColorD.a;
-
-        specularColor[0] = specularColorD.r;
-        specularColor[1] = specularColorD.g;
-        specularColor[2] = specularColorD.b;
-        specularColor[3] = specularColorD.a;
-
-        mesh->set_diffuse_color(diffuseColor, 4 * sizeof(float));
-        mesh->set_ambient_color(ambientColor, 4 * sizeof(float));
-        mesh->set_specular_color(specularColor, 4 * sizeof(float));
     }
 
     // save
