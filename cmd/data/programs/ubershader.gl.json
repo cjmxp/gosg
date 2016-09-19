@@ -10,7 +10,8 @@
   "samplerBindings": {
     "albedoTex": 0,
     "normalTex": 1,
-    "roughMetalTex": 2,
-    "shadowTex": 3
+    "roughTex": 2,
+    "metalTex": 3,
+    "shadowTex": 4
   }
 }

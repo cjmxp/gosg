@@ -29,11 +29,11 @@ func (r *RenderSystem) RenderLog() string {
 // Start implements the core.RenderSystem interface
 func (r *RenderSystem) Start() {
 	// load clear material
-	clearMaterial = core.GetResourceManager().Material("clear")
+	clearState = core.GetResourceManager().State("clear")
 
 	// set it as the active one, and force bind it
-	currentMaterial = clearMaterial
-	bindMaterialState(nil, clearMaterial, true)
+	currentState = clearState
+	bindMaterialState(nil, clearState, true)
 
 	// generate basic mesh buffers
 	sharedBuffers = newBuffers()
@@ -75,7 +75,7 @@ func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
 	}
 
 	if clearargs != 0 {
-		bindMaterialState(nil, clearMaterial, false)
+		bindMaterialState(nil, clearState, false)
 		gl.Clear(clearargs)
 	}
 }
@@ -93,7 +93,7 @@ func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 
 		for _, pass := range stage.Passes {
 			//r.renderLog += fmt.Sprintf("\tRenderPass: %s\n", pass.Name)
-			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.Material, false)
+			program := bindMaterialState(stage.Camera.Constants().UniformBuffer(), pass.State, false)
 
 			var renderBatches []RenderBatch
 

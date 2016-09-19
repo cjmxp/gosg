@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protos;
 
-message Material {
+message State {
     string name = 1;
     string programName = 2;
 

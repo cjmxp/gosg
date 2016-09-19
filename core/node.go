@@ -37,7 +37,7 @@ type Node struct {
 	worldBounds           *AABB
 
 	// state management
-	material     *protos.Material
+	state        *protos.State
 	materialData MaterialData
 
 	// geometry, lighting & physics
@@ -71,16 +71,16 @@ func (a NodesByMaterial) Less(i, j int) bool {
 	// this maps to: node.materialName, node.materialData.textures, node.materialData.bufferObjects
 
 	// sort by materialName first
-	if a[i].material.Name < a[j].material.Name {
+	if a[i].state.Name < a[j].state.Name {
 		return true
-	} else if a[i].material.Name > a[j].material.Name {
+	} else if a[i].state.Name > a[j].state.Name {
 		return false
 	}
 
 	// if we got here they share the same material, check program
-	if a[i].material.ProgramName < a[j].material.ProgramName {
+	if a[i].state.ProgramName < a[j].state.ProgramName {
 		return true
-	} else if a[i].material.ProgramName > a[j].material.ProgramName {
+	} else if a[i].state.ProgramName > a[j].state.ProgramName {
 		return false
 	}
 
@@ -179,7 +179,7 @@ func NewNode(name string) *Node {
 	n.inverseWorldTransform = n.transform.Inv()
 	n.active = true
 	n.bounds = NewAABB()
-	n.material = nil
+	n.state = nil
 	n.materialData = NewMaterialData()
 	n.children = make([]*Node, 0)
 	n.dirtyBounds = true
@@ -268,8 +268,8 @@ func (n *Node) setDirtyBounds() {
 }
 
 // MaterialName returns the node's material
-func (n *Node) Material() *protos.Material {
-	return n.material
+func (n *Node) State() *protos.State {
+	return n.state
 }
 
 // MaterialData returns the node's state

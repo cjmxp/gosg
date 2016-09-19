@@ -25,8 +25,8 @@ type ResourceSystem interface {
 	// Program returns a byte array representing a program.
 	Program(string) []byte
 
-	// Material returns a byte array representing a material
-	Material(string) []byte
+	// State returns a byte array representing a raster state
+	State(string) []byte
 
 	// ProgramData returns a byte array representing program data.
 	ProgramData(string) []byte
@@ -36,7 +36,7 @@ type ResourceSystem interface {
 type ResourceManager struct {
 	system          ResourceSystem
 	programs        map[string]Program
-	materials       map[string]*protos.Material
+	states          map[string]*protos.State
 	models          map[string]*Node
 	instancedModels map[string]*Node
 	textures        map[string]Texture
@@ -49,7 +49,7 @@ var (
 func init() {
 	resourceManager = &ResourceManager{
 		programs:        make(map[string]Program),
-		materials:       make(map[string]*protos.Material),
+		states:          make(map[string]*protos.State),
 		models:          make(map[string]*Node),
 		instancedModels: make(map[string]*Node),
 		textures:        make(map[string]Texture),
@@ -99,18 +99,18 @@ func (r *ResourceManager) Program(name string) Program {
 	return r.programs[name]
 }
 
-// Material returns a material.
-func (r *ResourceManager) Material(name string) *protos.Material {
-	if r.materials[name] == nil {
-		resource := r.system.Material(name)
-		var material protos.Material
-		if err := jsonpb.UnmarshalString(string(resource), &material); err != nil {
-			glog.Fatal("Cannot unmarshal material: ", err)
+// State returns a State
+func (r *ResourceManager) State(name string) *protos.State {
+	if r.states[name] == nil {
+		resource := r.system.State(name)
+		var state protos.State
+		if err := jsonpb.UnmarshalString(string(resource), &state); err != nil {
+			glog.Fatal("Cannot unmarshal state: ", err)
 		}
-		material.Name = name
-		r.materials[name] = &material
+		state.Name = name
+		r.states[name] = &state
 	}
-	return r.materials[name]
+	return r.states[name]
 }
 
 // ProgramData returns source file contents for a given program or subprogram

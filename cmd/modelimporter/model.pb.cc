@@ -39,17 +39,18 @@ void protobuf_AssignDesc_model_2eproto() {
       "model.proto");
   GOOGLE_CHECK(file != NULL);
   Mesh_descriptor_ = file->message_type(0);
-  static const int Mesh_offsets_[11] = {
+  static const int Mesh_offsets_[12] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, indices_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, positions_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, normals_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, tangents_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, bitangents_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, tcoords_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, material_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, albedo_map_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, normal_map_),
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, rough_metal_map_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, rough_map_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, metal_map_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, state_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Mesh, name_),
   };
   Mesh_reflection_ =
@@ -114,14 +115,14 @@ void protobuf_AddDesc_model_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\013model.proto\022\006protos\"\323\001\n\004Mesh\022\017\n\007indice"
+    "\n\013model.proto\022\006protos\"\335\001\n\004Mesh\022\017\n\007indice"
     "s\030\001 \001(\014\022\021\n\tpositions\030\002 \001(\014\022\017\n\007normals\030\003 "
     "\001(\014\022\020\n\010tangents\030\004 \001(\014\022\022\n\nbitangents\030\005 \001("
-    "\014\022\017\n\007tcoords\030\006 \001(\014\022\020\n\010material\030\t \001(\t\022\022\n\n"
-    "albedo_map\030\n \001(\014\022\022\n\nnormal_map\030\013 \001(\014\022\027\n\017"
-    "rough_metal_map\030\014 \001(\014\022\014\n\004name\030\r \001(\t\"%\n\005M"
-    "odel\022\034\n\006meshes\030\001 \003(\0132\014.protos.Meshb\006prot"
-    "o3", 282);
+    "\014\022\017\n\007tcoords\030\006 \001(\014\022\022\n\nalbedo_map\030\007 \001(\014\022\022"
+    "\n\nnormal_map\030\010 \001(\014\022\021\n\trough_map\030\t \001(\014\022\021\n"
+    "\tmetal_map\030\n \001(\014\022\r\n\005state\030\013 \001(\t\022\014\n\004name\030"
+    "\014 \001(\t\"%\n\005Model\022\034\n\006meshes\030\001 \003(\0132\014.protos."
+    "Meshb\006proto3", 292);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "model.proto", &protobuf_RegisterTypes);
   Mesh::default_instance_ = new Mesh();
@@ -147,10 +148,11 @@ const int Mesh::kNormalsFieldNumber;
 const int Mesh::kTangentsFieldNumber;
 const int Mesh::kBitangentsFieldNumber;
 const int Mesh::kTcoordsFieldNumber;
-const int Mesh::kMaterialFieldNumber;
 const int Mesh::kAlbedoMapFieldNumber;
 const int Mesh::kNormalMapFieldNumber;
-const int Mesh::kRoughMetalMapFieldNumber;
+const int Mesh::kRoughMapFieldNumber;
+const int Mesh::kMetalMapFieldNumber;
+const int Mesh::kStateFieldNumber;
 const int Mesh::kNameFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -182,10 +184,11 @@ void Mesh::SharedCtor() {
   tangents_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   bitangents_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   tcoords_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  material_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   albedo_map_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   normal_map_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rough_metal_map_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  rough_map_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  metal_map_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  state_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -201,10 +204,11 @@ void Mesh::SharedDtor() {
   tangents_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   bitangents_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   tcoords_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  material_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   albedo_map_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   normal_map_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rough_metal_map_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  rough_map_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  metal_map_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  state_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != default_instance_) {
   }
@@ -243,10 +247,11 @@ void Mesh::Clear() {
   tangents_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   bitangents_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   tcoords_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  material_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   albedo_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   normal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  rough_metal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  rough_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  metal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  state_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
@@ -333,69 +338,82 @@ bool Mesh::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(74)) goto parse_material;
+        if (input->ExpectTag(58)) goto parse_albedo_map;
         break;
       }
 
-      // optional string material = 9;
-      case 9: {
-        if (tag == 74) {
-         parse_material:
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_material()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->material().data(), this->material().length(),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "protos.Mesh.material"));
-        } else {
-          goto handle_unusual;
-        }
-        if (input->ExpectTag(82)) goto parse_albedo_map;
-        break;
-      }
-
-      // optional bytes albedo_map = 10;
-      case 10: {
-        if (tag == 82) {
+      // optional bytes albedo_map = 7;
+      case 7: {
+        if (tag == 58) {
          parse_albedo_map:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_albedo_map()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(90)) goto parse_normal_map;
+        if (input->ExpectTag(66)) goto parse_normal_map;
         break;
       }
 
-      // optional bytes normal_map = 11;
-      case 11: {
-        if (tag == 90) {
+      // optional bytes normal_map = 8;
+      case 8: {
+        if (tag == 66) {
          parse_normal_map:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_normal_map()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(98)) goto parse_rough_metal_map;
+        if (input->ExpectTag(74)) goto parse_rough_map;
         break;
       }
 
-      // optional bytes rough_metal_map = 12;
-      case 12: {
-        if (tag == 98) {
-         parse_rough_metal_map:
+      // optional bytes rough_map = 9;
+      case 9: {
+        if (tag == 74) {
+         parse_rough_map:
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_rough_metal_map()));
+                input, this->mutable_rough_map()));
         } else {
           goto handle_unusual;
         }
-        if (input->ExpectTag(106)) goto parse_name;
+        if (input->ExpectTag(82)) goto parse_metal_map;
         break;
       }
 
-      // optional string name = 13;
-      case 13: {
-        if (tag == 106) {
+      // optional bytes metal_map = 10;
+      case 10: {
+        if (tag == 82) {
+         parse_metal_map:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_metal_map()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(90)) goto parse_state;
+        break;
+      }
+
+      // optional string state = 11;
+      case 11: {
+        if (tag == 90) {
+         parse_state:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_state()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->state().data(), this->state().length(),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "protos.Mesh.state"));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(98)) goto parse_name;
+        break;
+      }
+
+      // optional string name = 12;
+      case 12: {
+        if (tag == 98) {
          parse_name:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_name()));
@@ -470,42 +488,48 @@ void Mesh::SerializeWithCachedSizes(
       6, this->tcoords(), output);
   }
 
-  // optional string material = 9;
-  if (this->material().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->material().data(), this->material().length(),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "protos.Mesh.material");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      9, this->material(), output);
-  }
-
-  // optional bytes albedo_map = 10;
+  // optional bytes albedo_map = 7;
   if (this->albedo_map().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      10, this->albedo_map(), output);
+      7, this->albedo_map(), output);
   }
 
-  // optional bytes normal_map = 11;
+  // optional bytes normal_map = 8;
   if (this->normal_map().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      11, this->normal_map(), output);
+      8, this->normal_map(), output);
   }
 
-  // optional bytes rough_metal_map = 12;
-  if (this->rough_metal_map().size() > 0) {
+  // optional bytes rough_map = 9;
+  if (this->rough_map().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      12, this->rough_metal_map(), output);
+      9, this->rough_map(), output);
   }
 
-  // optional string name = 13;
+  // optional bytes metal_map = 10;
+  if (this->metal_map().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      10, this->metal_map(), output);
+  }
+
+  // optional string state = 11;
+  if (this->state().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->state().data(), this->state().length(),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protos.Mesh.state");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      11, this->state(), output);
+  }
+
+  // optional string name = 12;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "protos.Mesh.name");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      13, this->name(), output);
+      12, this->name(), output);
   }
 
   // @@protoc_insertion_point(serialize_end:protos.Mesh)
@@ -556,39 +580,46 @@ void Mesh::SerializeWithCachedSizes(
         6, this->tcoords(), target);
   }
 
-  // optional string material = 9;
-  if (this->material().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->material().data(), this->material().length(),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "protos.Mesh.material");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        9, this->material(), target);
-  }
-
-  // optional bytes albedo_map = 10;
+  // optional bytes albedo_map = 7;
   if (this->albedo_map().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        10, this->albedo_map(), target);
+        7, this->albedo_map(), target);
   }
 
-  // optional bytes normal_map = 11;
+  // optional bytes normal_map = 8;
   if (this->normal_map().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        11, this->normal_map(), target);
+        8, this->normal_map(), target);
   }
 
-  // optional bytes rough_metal_map = 12;
-  if (this->rough_metal_map().size() > 0) {
+  // optional bytes rough_map = 9;
+  if (this->rough_map().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        12, this->rough_metal_map(), target);
+        9, this->rough_map(), target);
   }
 
-  // optional string name = 13;
+  // optional bytes metal_map = 10;
+  if (this->metal_map().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        10, this->metal_map(), target);
+  }
+
+  // optional string state = 11;
+  if (this->state().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->state().data(), this->state().length(),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "protos.Mesh.state");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        11, this->state(), target);
+  }
+
+  // optional string name = 12;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), this->name().length(),
@@ -596,7 +627,7 @@ void Mesh::SerializeWithCachedSizes(
       "protos.Mesh.name");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        13, this->name(), target);
+        12, this->name(), target);
   }
 
   // @@protoc_insertion_point(serialize_to_array_end:protos.Mesh)
@@ -649,35 +680,42 @@ int Mesh::ByteSize() const {
         this->tcoords());
   }
 
-  // optional string material = 9;
-  if (this->material().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->material());
-  }
-
-  // optional bytes albedo_map = 10;
+  // optional bytes albedo_map = 7;
   if (this->albedo_map().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->albedo_map());
   }
 
-  // optional bytes normal_map = 11;
+  // optional bytes normal_map = 8;
   if (this->normal_map().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->normal_map());
   }
 
-  // optional bytes rough_metal_map = 12;
-  if (this->rough_metal_map().size() > 0) {
+  // optional bytes rough_map = 9;
+  if (this->rough_map().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->rough_metal_map());
+        this->rough_map());
   }
 
-  // optional string name = 13;
+  // optional bytes metal_map = 10;
+  if (this->metal_map().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->metal_map());
+  }
+
+  // optional string state = 11;
+  if (this->state().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->state());
+  }
+
+  // optional string name = 12;
   if (this->name().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -736,10 +774,6 @@ void Mesh::MergeFrom(const Mesh& from) {
 
     tcoords_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.tcoords_);
   }
-  if (from.material().size() > 0) {
-
-    material_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.material_);
-  }
   if (from.albedo_map().size() > 0) {
 
     albedo_map_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.albedo_map_);
@@ -748,9 +782,17 @@ void Mesh::MergeFrom(const Mesh& from) {
 
     normal_map_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.normal_map_);
   }
-  if (from.rough_metal_map().size() > 0) {
+  if (from.rough_map().size() > 0) {
 
-    rough_metal_map_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.rough_metal_map_);
+    rough_map_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.rough_map_);
+  }
+  if (from.metal_map().size() > 0) {
+
+    metal_map_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.metal_map_);
+  }
+  if (from.state().size() > 0) {
+
+    state_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.state_);
   }
   if (from.name().size() > 0) {
 
@@ -788,10 +830,11 @@ void Mesh::InternalSwap(Mesh* other) {
   tangents_.Swap(&other->tangents_);
   bitangents_.Swap(&other->bitangents_);
   tcoords_.Swap(&other->tcoords_);
-  material_.Swap(&other->material_);
   albedo_map_.Swap(&other->albedo_map_);
   normal_map_.Swap(&other->normal_map_);
-  rough_metal_map_.Swap(&other->rough_metal_map_);
+  rough_map_.Swap(&other->rough_map_);
+  metal_map_.Swap(&other->metal_map_);
+  state_.Swap(&other->state_);
   name_.Swap(&other->name_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
@@ -1072,51 +1115,7 @@ void Mesh::clear_tcoords() {
   // @@protoc_insertion_point(field_set_allocated:protos.Mesh.tcoords)
 }
 
-// optional string material = 9;
-void Mesh::clear_material() {
-  material_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
- const ::std::string& Mesh::material() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.material)
-  return material_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
- void Mesh::set_material(const ::std::string& value) {
-  
-  material_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.material)
-}
- void Mesh::set_material(const char* value) {
-  
-  material_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.material)
-}
- void Mesh::set_material(const char* value, size_t size) {
-  
-  material_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.material)
-}
- ::std::string* Mesh::mutable_material() {
-  
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.material)
-  return material_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
- ::std::string* Mesh::release_material() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.material)
-  
-  return material_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
- void Mesh::set_allocated_material(::std::string* material) {
-  if (material != NULL) {
-    
-  } else {
-    
-  }
-  material_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), material);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.material)
-}
-
-// optional bytes albedo_map = 10;
+// optional bytes albedo_map = 7;
 void Mesh::clear_albedo_map() {
   albedo_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1160,7 +1159,7 @@ void Mesh::clear_albedo_map() {
   // @@protoc_insertion_point(field_set_allocated:protos.Mesh.albedo_map)
 }
 
-// optional bytes normal_map = 11;
+// optional bytes normal_map = 8;
 void Mesh::clear_normal_map() {
   normal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -1204,51 +1203,139 @@ void Mesh::clear_normal_map() {
   // @@protoc_insertion_point(field_set_allocated:protos.Mesh.normal_map)
 }
 
-// optional bytes rough_metal_map = 12;
-void Mesh::clear_rough_metal_map() {
-  rough_metal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// optional bytes rough_map = 9;
+void Mesh::clear_rough_map() {
+  rough_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- const ::std::string& Mesh::rough_metal_map() const {
-  // @@protoc_insertion_point(field_get:protos.Mesh.rough_metal_map)
-  return rough_metal_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+ const ::std::string& Mesh::rough_map() const {
+  // @@protoc_insertion_point(field_get:protos.Mesh.rough_map)
+  return rough_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void Mesh::set_rough_metal_map(const ::std::string& value) {
+ void Mesh::set_rough_map(const ::std::string& value) {
   
-  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:protos.Mesh.rough_metal_map)
+  rough_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protos.Mesh.rough_map)
 }
- void Mesh::set_rough_metal_map(const char* value) {
+ void Mesh::set_rough_map(const char* value) {
   
-  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:protos.Mesh.rough_metal_map)
+  rough_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protos.Mesh.rough_map)
 }
- void Mesh::set_rough_metal_map(const void* value, size_t size) {
+ void Mesh::set_rough_map(const void* value, size_t size) {
   
-  rough_metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  rough_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.rough_metal_map)
+  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.rough_map)
 }
- ::std::string* Mesh::mutable_rough_metal_map() {
+ ::std::string* Mesh::mutable_rough_map() {
   
-  // @@protoc_insertion_point(field_mutable:protos.Mesh.rough_metal_map)
-  return rough_metal_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:protos.Mesh.rough_map)
+  return rough_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- ::std::string* Mesh::release_rough_metal_map() {
-  // @@protoc_insertion_point(field_release:protos.Mesh.rough_metal_map)
+ ::std::string* Mesh::release_rough_map() {
+  // @@protoc_insertion_point(field_release:protos.Mesh.rough_map)
   
-  return rough_metal_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  return rough_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
- void Mesh::set_allocated_rough_metal_map(::std::string* rough_metal_map) {
-  if (rough_metal_map != NULL) {
+ void Mesh::set_allocated_rough_map(::std::string* rough_map) {
+  if (rough_map != NULL) {
     
   } else {
     
   }
-  rough_metal_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), rough_metal_map);
-  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.rough_metal_map)
+  rough_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), rough_map);
+  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.rough_map)
 }
 
-// optional string name = 13;
+// optional bytes metal_map = 10;
+void Mesh::clear_metal_map() {
+  metal_map_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ const ::std::string& Mesh::metal_map() const {
+  // @@protoc_insertion_point(field_get:protos.Mesh.metal_map)
+  return metal_map_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void Mesh::set_metal_map(const ::std::string& value) {
+  
+  metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protos.Mesh.metal_map)
+}
+ void Mesh::set_metal_map(const char* value) {
+  
+  metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protos.Mesh.metal_map)
+}
+ void Mesh::set_metal_map(const void* value, size_t size) {
+  
+  metal_map_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.metal_map)
+}
+ ::std::string* Mesh::mutable_metal_map() {
+  
+  // @@protoc_insertion_point(field_mutable:protos.Mesh.metal_map)
+  return metal_map_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ ::std::string* Mesh::release_metal_map() {
+  // @@protoc_insertion_point(field_release:protos.Mesh.metal_map)
+  
+  return metal_map_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void Mesh::set_allocated_metal_map(::std::string* metal_map) {
+  if (metal_map != NULL) {
+    
+  } else {
+    
+  }
+  metal_map_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), metal_map);
+  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.metal_map)
+}
+
+// optional string state = 11;
+void Mesh::clear_state() {
+  state_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ const ::std::string& Mesh::state() const {
+  // @@protoc_insertion_point(field_get:protos.Mesh.state)
+  return state_.GetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void Mesh::set_state(const ::std::string& value) {
+  
+  state_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:protos.Mesh.state)
+}
+ void Mesh::set_state(const char* value) {
+  
+  state_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:protos.Mesh.state)
+}
+ void Mesh::set_state(const char* value, size_t size) {
+  
+  state_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:protos.Mesh.state)
+}
+ ::std::string* Mesh::mutable_state() {
+  
+  // @@protoc_insertion_point(field_mutable:protos.Mesh.state)
+  return state_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ ::std::string* Mesh::release_state() {
+  // @@protoc_insertion_point(field_release:protos.Mesh.state)
+  
+  return state_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+ void Mesh::set_allocated_state(::std::string* state) {
+  if (state != NULL) {
+    
+  } else {
+    
+  }
+  state_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), state);
+  // @@protoc_insertion_point(field_set_allocated:protos.Mesh.state)
+}
+
+// optional string name = 12;
 void Mesh::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }

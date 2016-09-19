@@ -24,7 +24,8 @@ layout (location = 0) out vec4 color;
 
 uniform sampler2D albedoTex;
 uniform sampler2D normalTex;
-uniform sampler2D roughMetalTex;
+uniform sampler2D roughTex;
+uniform sampler2D metalTex;
 uniform sampler2D shadowTex;
 
 float shadowMap(vec2 coords, float compare) {

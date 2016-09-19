@@ -25,7 +25,7 @@ func LoadModel(name string, res []byte) *Node {
 	for i := 0; i < len(model.Meshes); i++ {
 		node := NewNode(basename + fmt.Sprintf("-%d", i))
 
-		node.material = resourceManager.Material(model.Meshes[i].Material)
+		node.state = resourceManager.State(model.Meshes[i].State)
 
 		// get textures
 		if len(model.Meshes[i].AlbedoMap) > 0 {
@@ -36,8 +36,12 @@ func LoadModel(name string, res []byte) *Node {
 			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
 		}
 
-		if len(model.Meshes[i].RoughMetalMap) > 0 {
-			node.MaterialData().SetTexture("roughMetalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
+		if len(model.Meshes[i].RoughMap) > 0 {
+			node.MaterialData().SetTexture("roughTex", renderSystem.NewTexture(model.Meshes[i].RoughMap))
+		}
+
+		if len(model.Meshes[i].MetalMap) > 0 {
+			node.MaterialData().SetTexture("metalTex", renderSystem.NewTexture(model.Meshes[i].MetalMap))
 		}
 
 		// set mesh data

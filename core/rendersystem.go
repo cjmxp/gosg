@@ -67,9 +67,9 @@ const (
 
 // RenderPass represents one operation of rendering a set of nodes with a given rasterstate and a program
 type RenderPass struct {
-	Nodes    []*Node
-	Name     string
-	Material *protos.Material
+	Nodes []*Node
+	Name  string
+	State *protos.State
 }
 
 // RenderStage represents a group of renderpasses from a single camera and list of nodes
@@ -102,16 +102,16 @@ func GetRenderSystem() RenderSystem {
 }
 
 // DefaultRenderTechnique does z pre-pass, diffuse pass, transparency pass
-func DefaultRenderTechnique(camera *Camera, materialBuckets map[*protos.Material][]*Node) RenderStage {
+func DefaultRenderTechnique(camera *Camera, materialBuckets map[*protos.State][]*Node) RenderStage {
 	var out RenderStage
 	out.Name = fmt.Sprintf("%s-DefaultRenderTechnique", camera.name)
 	out.Camera = camera
 
 	// create a depth prepass, single state, program and all opaque nodes
 	var zPrepass = RenderPass{
-		Material: resourceManager.Material("zpass"),
-		Name:     "DepthPrePass",
-		Nodes:    []*Node{},
+		State: resourceManager.State("zpass"),
+		Name:  "DepthPrePass",
+		Nodes: []*Node{},
 	}
 
 	var opaquePasses = make([]RenderPass, 0)
@@ -121,17 +121,17 @@ func DefaultRenderTechnique(camera *Camera, materialBuckets map[*protos.Material
 	for material, nodeBucket := range materialBuckets {
 		if material.Blending == true {
 			transparentPasses = append(transparentPasses, RenderPass{
-				Material: material,
-				Name:     "Diffuse-Transparent",
-				Nodes:    nodeBucket,
+				State: material,
+				Name:  "Diffuse-Transparent",
+				Nodes: nodeBucket,
 			})
 			continue
 		}
 
 		opaquePasses = append(opaquePasses, RenderPass{
-			Material: material,
-			Name:     "Diffuse",
-			Nodes:    nodeBucket,
+			State: material,
+			Name:  "Diffuse",
+			Nodes: nodeBucket,
 		})
 
 		// append opaque nodes to z prepass

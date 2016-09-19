@@ -147,7 +147,7 @@ func newImguiNode(name string) *Node {
 	node.lightExtractor = nil
 	node.physicsComponent = nil
 	node.SetCullComponent(new(AlwaysPassCuller))
-	node.material = resourceManager.Material("imgui")
+	node.state = resourceManager.State("imgui")
 	node.materialData = NewMaterialData()
 	mesh := renderSystem.NewIMGUIMesh()
 	mesh.SetPrimitiveType(PrimitiveTypeTriangles)

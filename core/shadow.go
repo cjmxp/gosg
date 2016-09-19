@@ -14,7 +14,7 @@ type Shadower interface {
 	RenderTarget() RenderTarget
 
 	// Render calls the shadower render implementation by assing a light and a list of nodes.
-	RenderStage(light *Light, materialBuckets map[*protos.Material][]*Node) RenderStage
+	RenderStage(light *Light, stateBuckets map[*protos.State][]*Node) RenderStage
 }
 
 // ShadowMap is a utility implementation of the Shadower interface which renders shadows by using a shadow map.
@@ -41,7 +41,7 @@ func (s *ShadowMap) RenderTarget() RenderTarget {
 }
 
 // Render implements the Shadower interface
-func (s *ShadowMap) RenderStage(light *Light, materialBuckets map[*protos.Material][]*Node) (out RenderStage) {
+func (s *ShadowMap) RenderStage(light *Light, stateBuckets map[*protos.State][]*Node) (out RenderStage) {
 	/*
 		1-find all objects that are inside the current camera frustum
 		2-find minimal aa bounding box that encloses them all
@@ -53,7 +53,7 @@ func (s *ShadowMap) RenderStage(light *Light, materialBuckets map[*protos.Materi
 	// 1-find all objects that are inside the current camera frustum
 	// 2-find minimal aa bounding box that encloses them all
 	nodesBoundsWorld := NewAABB()
-	for _, nodes := range materialBuckets {
+	for _, nodes := range stateBuckets {
 		for n := range nodes {
 			nodesBoundsWorld.ExtendWithBox(nodes[n].worldBounds)
 
@@ -95,15 +95,15 @@ func (s *ShadowMap) RenderStage(light *Light, materialBuckets map[*protos.Materi
 	s.camera.constants.SetData(s.camera.projectionMatrix, s.camera.viewMatrix, nil)
 
 	// create pass per bucket, opaque is default
-	for material, nodeBucket := range materialBuckets {
-		if material.Blending == true {
+	for state, nodeBucket := range stateBuckets {
+		if state.Blending == true {
 			continue
 		}
 
 		out.Passes = append(out.Passes, RenderPass{
-			Material: resourceManager.Material("zpass"),
-			Name:     "ShadowPass",
-			Nodes:    nodeBucket,
+			State: resourceManager.State("zpass"),
+			Name:  "ShadowPass",
+			Nodes: nodeBucket,
 		})
 	}
 

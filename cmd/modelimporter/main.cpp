@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
 
         // set name
         mesh->set_name(scene->mMeshes[i]->mName.data);
+        std::cerr << "Processing mesh: " << mesh->name() << std::endl;
 
         // set buffers
         mesh->set_positions(scene->mMeshes[i]->mVertices, sizeof(float)*vertexCount*3);
@@ -70,23 +71,44 @@ int main(int argc, char **argv) {
 
         // material and textures
         aiMaterial *mat = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
-
-        struct aiString materialName;
-        aiGetMaterialString(mat, AI_MATKEY_NAME, &materialName);
-        mesh->set_material(materialName.data);
-
-        struct aiString albedoPath, normalPath;
+        struct aiString albedoPath, normalPath, opacityPath, roughPath, metalPath;
         aiGetMaterialString(mat, AI_MATKEY_TEXTURE_DIFFUSE(0), &albedoPath);
         aiGetMaterialString(mat, AI_MATKEY_TEXTURE_HEIGHT(0), &normalPath);
+        aiGetMaterialString(mat, AI_MATKEY_TEXTURE_OPACITY(0), &opacityPath);
+        aiGetMaterialString(mat, AI_MATKEY_TEXTURE_AMBIENT(0), &roughPath);
+        aiGetMaterialString(mat, AI_MATKEY_TEXTURE_SPECULAR(0), &metalPath);
+
+        // this is our trick. if albedo == opacity, then albedo alpha channel is used,
+        // this means this is a transparent material, so the raster state for it is pbr-transparent
+        if (opacityPath.length > 0) {
+            mesh->set_state(std::string("pbr-transparent"));
+        } else {
+            mesh->set_state(std::string("pbr-opaque"));
+        }
+        std::cerr << "Mesh state: " << mesh->state() << std::endl;
 
         if (albedoPath.length > 0) {
             auto fullAlbedoPath = base_directory + "/" + std::string(albedoPath.data);
             mesh->set_albedo_map(load_texture(fullAlbedoPath));
+            std::cerr << "Mesh albedo: " << albedoPath.data << std::endl;
         }
 
         if (normalPath.length > 0) {
             auto fullNormalPath = base_directory + "/" + std::string(normalPath.data);
             mesh->set_normal_map(load_texture(fullNormalPath));
+            std::cerr << "Mesh normal: " << normalPath.data << std::endl;
+        }
+
+        if (roughPath.length > 0) {
+            auto fullRoughPath = base_directory + "/" + std::string(roughPath.data);
+            mesh->set_rough_map(load_texture(fullRoughPath));
+            std::cerr << "Mesh rough: " << roughPath.data << std::endl;
+        }
+
+        if (metalPath.length > 0) {
+            auto fullMetalPath = base_directory + "/" + std::string(metalPath.data);
+            mesh->set_metal_map(load_texture(fullMetalPath));
+            std::cerr << "Mesh metal: " << metalPath.data << std::endl;
         }
     }
 

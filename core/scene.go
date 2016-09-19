@@ -106,14 +106,14 @@ func (s *Scene) cull() {
 	}
 
 	for _, c := range s.cameraList {
-		for bk, _ := range c.materialBuckets {
-			c.materialBuckets[bk] = c.materialBuckets[bk][:0]
+		for bk, _ := range c.stateBuckets {
+			c.stateBuckets[bk] = c.stateBuckets[bk][:0]
 		}
 
 		c.scene.CullComponent().Run(s, c, c.scene)
 
-		for bk, _ := range c.materialBuckets {
-			sort.Sort(NodesByMaterial(c.materialBuckets[bk]))
+		for bk, _ := range c.stateBuckets {
+			sort.Sort(NodesByMaterial(c.stateBuckets[bk]))
 		}
 	}
 }
@@ -125,14 +125,14 @@ func (s *Scene) draw() {
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {
 				if light.Shadower != nil {
-					shadowStage := light.Shadower.RenderStage(light, camera.materialBuckets)
+					shadowStage := light.Shadower.RenderStage(light, camera.stateBuckets)
 					p.Stages = append(p.Stages, shadowStage)
 				}
 			}
 		}
 
 		camera.constants.SetData(camera.ProjectionMatrix(), camera.ViewMatrix(), s.lights)
-		mainStage := DefaultRenderTechnique(camera, camera.materialBuckets)
+		mainStage := DefaultRenderTechnique(camera, camera.stateBuckets)
 		p.Stages = append(p.Stages, mainStage)
 	}
 

@@ -8,13 +8,13 @@ import (
 )
 
 var (
-	clearMaterial       *protos.Material
-	currentMaterial     *protos.Material
+	clearState          *protos.State
+	currentState        *protos.State
 	textureUnitBindings = map[uint32]uint32{}
 )
 
-func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force bool) *Program {
-	if material.DepthTest != currentMaterial.DepthTest || force {
+func bindMaterialState(ub core.UniformBuffer, material *protos.State, force bool) *Program {
+	if material.DepthTest != currentState.DepthTest || force {
 		if material.DepthTest {
 			gl.Enable(gl.DEPTH_TEST)
 		} else {
@@ -22,18 +22,18 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 		}
 	}
 
-	if material.DepthFunc != currentMaterial.DepthFunc || force {
+	if material.DepthFunc != currentState.DepthFunc || force {
 		switch material.DepthFunc {
-		case protos.Material_DEPTH_LESS:
+		case protos.State_DEPTH_LESS:
 			gl.DepthFunc(gl.LESS)
-		case protos.Material_DEPTH_LESS_EQUAL:
+		case protos.State_DEPTH_LESS_EQUAL:
 			gl.DepthFunc(gl.LEQUAL)
-		case protos.Material_DEPTH_EQUAL:
+		case protos.State_DEPTH_EQUAL:
 			gl.DepthFunc(gl.EQUAL)
 		}
 	}
 
-	if material.ScissorTest != currentMaterial.ScissorTest || force {
+	if material.ScissorTest != currentState.ScissorTest || force {
 		if material.ScissorTest {
 			gl.Enable(gl.SCISSOR_TEST)
 		} else {
@@ -41,7 +41,7 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 		}
 	}
 
-	if material.Blending != currentMaterial.Blending || force {
+	if material.Blending != currentState.Blending || force {
 		if material.Blending {
 			gl.Enable(gl.BLEND)
 		} else {
@@ -49,48 +49,48 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 		}
 	}
 
-	if material.BlendSrcMode != currentMaterial.BlendSrcMode || material.BlendDstMode != currentMaterial.BlendDstMode || force {
+	if material.BlendSrcMode != currentState.BlendSrcMode || material.BlendDstMode != currentState.BlendDstMode || force {
 		srcMode := uint32(0)
 		dstMode := uint32(0)
 
 		switch material.BlendSrcMode {
-		case protos.Material_BLEND_ONE:
+		case protos.State_BLEND_ONE:
 			srcMode = gl.ONE
-		case protos.Material_BLEND_ONE_MINUS_SRC_ALPHA:
+		case protos.State_BLEND_ONE_MINUS_SRC_ALPHA:
 			srcMode = gl.ONE_MINUS_SRC_ALPHA
-		case protos.Material_BLEND_SRC_ALPHA:
+		case protos.State_BLEND_SRC_ALPHA:
 			srcMode = gl.SRC_ALPHA
 		}
 
 		switch material.BlendDstMode {
-		case protos.Material_BLEND_ONE:
+		case protos.State_BLEND_ONE:
 			dstMode = gl.ONE
-		case protos.Material_BLEND_ONE_MINUS_SRC_ALPHA:
+		case protos.State_BLEND_ONE_MINUS_SRC_ALPHA:
 			dstMode = gl.ONE_MINUS_SRC_ALPHA
-		case protos.Material_BLEND_SRC_ALPHA:
+		case protos.State_BLEND_SRC_ALPHA:
 			dstMode = gl.SRC_ALPHA
 		}
 		gl.BlendFunc(srcMode, dstMode)
 	}
 
-	if material.BlendEquation != currentMaterial.BlendEquation || force {
+	if material.BlendEquation != currentState.BlendEquation || force {
 		switch material.BlendEquation {
-		case protos.Material_BLEND_FUNC_ADD:
+		case protos.State_BLEND_FUNC_ADD:
 			gl.BlendEquation(gl.FUNC_ADD)
-		case protos.Material_BLEND_FUNC_MAX:
+		case protos.State_BLEND_FUNC_MAX:
 			gl.BlendEquation(gl.MAX)
 		}
 	}
 
-	if material.DepthWrite != currentMaterial.DepthWrite || force {
+	if material.DepthWrite != currentState.DepthWrite || force {
 		gl.DepthMask(material.DepthWrite)
 	}
 
-	if material.ColorWrite != currentMaterial.ColorWrite || force {
+	if material.ColorWrite != currentState.ColorWrite || force {
 		gl.ColorMask(material.ColorWrite, material.ColorWrite, material.ColorWrite, material.ColorWrite)
 	}
 
-	if material.Culling != currentMaterial.Culling || force {
+	if material.Culling != currentState.Culling || force {
 		if material.Culling {
 			gl.Enable(gl.CULL_FACE)
 		} else {
@@ -98,20 +98,20 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 		}
 	}
 
-	if material.CullFace != currentMaterial.CullFace || force {
+	if material.CullFace != currentState.CullFace || force {
 		switch material.CullFace {
-		case protos.Material_CULL_BACK:
+		case protos.State_CULL_BACK:
 			gl.CullFace(gl.BACK)
-		case protos.Material_CULL_FRONT:
+		case protos.State_CULL_FRONT:
 			gl.CullFace(gl.FRONT)
-		case protos.Material_CULL_BOTH:
+		case protos.State_CULL_BOTH:
 			gl.CullFace(gl.FRONT_AND_BACK)
 		}
 	}
 
 	glProgram := core.GetResourceManager().Program(material.ProgramName).(*Program)
 
-	if material.ProgramName != currentMaterial.ProgramName || force {
+	if material.ProgramName != currentState.ProgramName || force {
 		glProgram.bind()
 	}
 
@@ -120,7 +120,7 @@ func bindMaterialState(ub core.UniformBuffer, material *protos.Material, force b
 		glProgram.setUniformBufferByName("cameraConstants", ub.(*UniformBuffer))
 	}
 
-	currentMaterial = material
+	currentState = material
 
 	return glProgram
 }

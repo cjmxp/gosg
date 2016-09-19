@@ -34,7 +34,7 @@ const (
 )
 
 // RenderStageFn is a function which returns a stage of a renderplan pipeline
-type RenderStageFn func(c *Camera, materialBuckets map[*protos.Material][]*Node) RenderStage
+type RenderStageFn func(c *Camera, materialBuckets map[*protos.State][]*Node) RenderStage
 
 // A Camera represents a scenegraph camera object. It wraps data which holds
 // its transforms (projection and view matrices), clear information, whether
@@ -61,7 +61,7 @@ type Camera struct {
 	frustum          [6]mgl64.Vec4
 	constants        *CameraConstants
 	renderTechnique  RenderStageFn
-	materialBuckets  map[*protos.Material][]*Node
+	stateBuckets     map[*protos.State][]*Node
 }
 
 // CamerasByRenderOrder is used to sort cameras by the render order field.
@@ -102,7 +102,7 @@ func NewCamera(name string, projType ProjectionType) *Camera {
 	cam.node = NewNode(name)
 	cam.constants = NewCameraConstants()
 	cam.renderTechnique = DefaultRenderTechnique
-	cam.materialBuckets = make(map[*protos.Material][]*Node)
+	cam.stateBuckets = make(map[*protos.State][]*Node)
 
 	runtime.SetFinalizer(&cam, deleteCamera)
 	return &cam
