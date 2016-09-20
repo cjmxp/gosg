@@ -28,53 +28,26 @@ uniform sampler2D roughTex;
 uniform sampler2D metalTex;
 uniform sampler2D shadowTex;
 
-float shadowMap(vec2 coords, float compare) {
-    return step(compare, texture(shadowTex, coords).r);
+float linstep(float low, float high, float v) {
+    return clamp((v - low) / (high - low), 0.0, 1.0);
 }
 
-float shadowMapLinear(vec2 coords, float compare) {
-    vec2 texelSize = vec2(1.0/2048.0);
-    
-    vec2 pixelPos = coords/texelSize + vec2(0.5);
-    vec2 fracPart = fract(pixelPos);
-    vec2 startTexel = (pixelPos - fracPart) * texelSize;
-    
-    float blTexel = shadowMap(startTexel, compare);
-    float brTexel = shadowMap(startTexel + vec2(texelSize.x, 0.0), compare);
-    float tlTexel = shadowMap(startTexel + vec2(0.0, texelSize.y), compare);
-    float trTexel = shadowMap(startTexel + texelSize, compare);
-    
-    float mixA = mix(blTexel, tlTexel, fracPart.y);
-    float mixB = mix(brTexel, trTexel, fracPart.y);
-    
-    return mix(mixA, mixB, fracPart.x);
+float varianceShadowMap(vec2 coords, float compare) {
+    vec2 moments = texture(shadowTex, coords.xy).xy;
+
+    float p = step(compare, moments.x);
+    float variance = max(moments.y - moments.x * moments.x, 0.0000001);
+
+    float d = compare - moments.x;
+    float pMax = linstep(0.2, 1.0, variance / (variance + d*d));
+
+    return min(max(p, pMax), 1.0);
 }
 
-float shadowMapPCF(vec2 coords, float compare) {
-    const float NUM_SAMPLES = 3.0f;
-    const float SAMPLES_START = (NUM_SAMPLES-1.0)/2.0;
-    const float NUM_SAMPLES_SQUARED = NUM_SAMPLES*NUM_SAMPLES;
-    const vec2 texelSize = vec2(1.0/2048.0);
-    
-    float result = 0.0;
-    
-    for (float y=-SAMPLES_START; y<=SAMPLES_START; y+=1.0) {
-        for (float x=-SAMPLES_START; x<=SAMPLES_START; x+=1.0) {
-            vec2 coordsOffset = vec2(x, y)*texelSize;
-            result += shadowMapLinear(coords + coordsOffset, compare);
-        }
-    }
-    
-    return result/NUM_SAMPLES_SQUARED;
-}
-
-float shadow(vec4 coords, float dotNL) {
-    float cosTheta = clamp(dotNL, 0.0, 1.0);
-    float bias = clamp(0.005*tan(acos(cosTheta)), 0.0, 0.01);
-
+float shadow(vec4 coords) {
     vec3 shadowMapCoords = coords.xyz/coords.w;
-    float compare = shadowMapCoords.z - 1.0/512.0;
-    return shadowMapPCF(shadowMapCoords.xy, compare);
+    float compare = shadowMapCoords.z;
+    return varianceShadowMap(shadowMapCoords.xy, compare);
 }
 
 const float A = 0.15;
@@ -162,7 +135,7 @@ void main() {
 
         vec3 color_spec = NdotL_clamped * brdf_spec * lights[i].color.rgb;
         vec3 color_diff = NdotL_clamped * diffuse_energy_ratio(f0, N, L) * albedo.rgb * lights[i].color.rgb;
-        color.rgb += (color_diff + color_spec) * shadow(lights[i].vpMatrix * vec4(position, 1.0), dot(N, L));
+        color.rgb += (color_diff + color_spec) * shadow(lights[i].vpMatrix * vec4(position, 1.0));
     }
 
     color.a = albedo.a;

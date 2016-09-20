@@ -20,8 +20,7 @@ int main(int argc, char **argv) {
     auto base_directory = modelfile.substr(0, modelfile.find_last_of("/\\"));
 
     // set our global options. this will change
-    auto opts = 0 |
-                aiProcessPreset_TargetRealtime_MaxQuality |
+    auto opts = aiProcessPreset_TargetRealtime_MaxQuality |
                 aiProcess_CalcTangentSpace |
                 aiProcess_FixInfacingNormals |
                 aiProcess_FlipUVs |

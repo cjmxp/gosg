@@ -25,7 +25,7 @@ type ShadowMap struct {
 
 // NewShadowMap returns a new ShadowMap
 func NewShadowMap(size uint16) *ShadowMap {
-	rt := renderSystem.NewRenderTarget(uint32(size), uint32(size), 1, 0)
+	rt := renderSystem.NewRenderTarget(uint32(size), uint32(size), 0, 10)
 	c := NewCamera("ShadowCamera", OrthographicProjection)
 
 	c.SetRenderTarget(rt)
@@ -58,7 +58,7 @@ func (s *ShadowMap) RenderStage(light *Light, stateBuckets map[*protos.State][]*
 			nodesBoundsWorld.ExtendWithBox(nodes[n].worldBounds)
 
 			// for now, hack the shadow texture sampler
-			nodes[n].materialData.SetTexture("shadowTex", s.camera.renderTarget.DepthTexture())
+			nodes[n].materialData.SetTexture("shadowTex", s.camera.renderTarget.ColorTexture(0))
 		}
 	}
 
@@ -101,7 +101,7 @@ func (s *ShadowMap) RenderStage(light *Light, stateBuckets map[*protos.State][]*
 		}
 
 		out.Passes = append(out.Passes, RenderPass{
-			State: resourceManager.State("zpass"),
+			State: resourceManager.State("shadow"),
 			Name:  "ShadowPass",
 			Nodes: nodeBucket,
 		})
