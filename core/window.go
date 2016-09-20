@@ -14,6 +14,7 @@ type WindowConfig struct {
 	Monitor           *glfw.Monitor
 	Width, Height, Hz int
 	Fullscreen        bool
+	Vsync             int
 }
 
 // WindowManager exposes windowing to client applications
@@ -49,7 +50,7 @@ func (w *WindowManager) Start() {
 	w.window = renderSystem.MakeWindow(w.cfg)
 	w.window.SetInputMode(glfw.CursorMode, glfw.CursorDisabled)
 	w.installCallbacks()
-	glfw.SwapInterval(1)
+	glfw.SwapInterval(w.cfg.Vsync)
 }
 
 // WindowSize implements the WindowSystem interface
@@ -67,32 +68,12 @@ func (w *WindowManager) installCallbacks() {
 	w.window.SetMouseButtonCallback(inputManager.MouseButtonCallback)
 	w.window.SetCursorPosCallback(inputManager.MouseMoveCallback)
 	w.window.SetScrollCallback(inputManager.MouseScrollCallback)
-	w.window.SetSizeCallback(w.SizeCallback)
-}
-
-// SizeCallback is called from glfw when the window is resized
-func (w *WindowManager) SizeCallback(window *glfw.Window, width int, height int) {
-	w.cfg.Width = width
-	w.cfg.Height = height
 }
 
 // Stop implements the WindowSystem interface
 func (w *WindowManager) Stop() {
 	glog.Info("Stopping")
 	glfw.Terminate()
-}
-
-// SetActive pauses/resumes the timer manager.
-func (w *WindowManager) SetActive(active bool) {
-	w.active = active
-
-	if w.active == true {
-		w.window.SetCursorPosCallback(inputManager.MouseMoveCallback)
-		GetTimerManager().Start()
-	} else {
-		w.window.SetCursorPosCallback(nil)
-		GetTimerManager().Pause()
-	}
 }
 
 // CursorPosition implements the WindowSystem interface

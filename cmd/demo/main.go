@@ -44,6 +44,7 @@ func main() {
 		Width:      vm.Width / 2,
 		Height:     vm.Height / 2,
 		Fullscreen: false,
+		Vsync:      1,
 	})
 
 	// start main loop, pass the appcontroller init function
