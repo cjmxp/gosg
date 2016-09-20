@@ -20,10 +20,6 @@ type RenderSystem interface {
 	// PrepareWindow initializes a new window
 	MakeWindow(cfg WindowConfig) *glfw.Window
 
-	// PrepareViewport is an implementation specific function which prepares a camera's framebuffers and viewport for
-	// rendering according to the camera's policy.
-	PrepareRenderTarget(c *Camera)
-
 	// NewMesh retuns a new mesh.
 	NewMesh() Mesh
 

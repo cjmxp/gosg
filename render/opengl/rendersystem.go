@@ -46,8 +46,7 @@ func (r *RenderSystem) Stop() {
 	glog.Info("Stopping")
 }
 
-// PrepareViewport implements the core.RenderSystem interface
-func (r *RenderSystem) PrepareRenderTarget(c *core.Camera) {
+func (r *RenderSystem) prepareRenderTarget(c *core.Camera) {
 	// bind specific render target
 	if c.RenderTarget() != nil {
 		c.RenderTarget().(*RenderTarget).bind()
@@ -89,7 +88,7 @@ type RenderBatch struct {
 func (r *RenderSystem) ExecuteRenderPlan(p core.RenderPlan) {
 	for _, stage := range p.Stages {
 		//r.renderLog += fmt.Sprintf("RenderStage: %s\n", stage.Name)
-		r.PrepareRenderTarget(stage.Camera)
+		r.prepareRenderTarget(stage.Camera)
 
 		for _, pass := range stage.Passes {
 			//r.renderLog += fmt.Sprintf("\tRenderPass: %s\n", pass.Name)
