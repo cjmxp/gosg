@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fcvarela/gosg/protos"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 // RenderSystem is an interface which wraps all logic related to rendering and memory management of
@@ -15,6 +16,9 @@ type RenderSystem interface {
 
 	// Stop is called at application shutdown. Implementations which require cleanup may do so here.
 	Stop()
+
+	// PrepareWindow initializes a new window
+	MakeWindow(cfg WindowConfig) *glfw.Window
 
 	// PrepareViewport is an implementation specific function which prepares a camera's framebuffers and viewport for
 	// rendering according to the camera's policy.

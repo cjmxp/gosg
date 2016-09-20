@@ -13,7 +13,7 @@ import (
 	_ "github.com/fcvarela/gosg/physics/bullet"
 	_ "github.com/fcvarela/gosg/render/opengl"
 	_ "github.com/fcvarela/gosg/resource/filesystem"
-	_ "github.com/fcvarela/gosg/window/glfw"
+	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/golang/glog"
 )
 
@@ -34,17 +34,17 @@ func main() {
 	app := new(core.Application)
 
 	// initialize the window, maybe show an OS-native dialogue here?
-	monitors := core.GetWindowSystem().Monitors()
-	vms := monitors[0].VideoModes()
+	monitors := glfw.GetMonitors()
+	vms := monitors[0].GetVideoModes()
 	vm := vms[len(vms)-1]
 
-	core.GetWindowSystem().InitWindow(
-		"Demo", core.WindowConfig{
-			Monitor:    monitors[0],
-			Width:      vm.Width() / 2,
-			Height:     vm.Height() / 2,
-			Fullscreen: false,
-		})
+	core.GetWindowManager().SetWindowConfig(core.WindowConfig{
+		Name:       "Demo",
+		Monitor:    monitors[0],
+		Width:      vm.Width / 2,
+		Height:     vm.Height / 2,
+		Fullscreen: false,
+	})
 
 	// start main loop, pass the appcontroller init function
 	app.Start(demoapp.NewClientApplication)

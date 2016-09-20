@@ -97,7 +97,7 @@ func (s *Scene) update(dt float64) {
 
 func (s *Scene) cull() {
 	for _, c := range s.cameraList {
-		c.Reshape(windowSystem.WindowSize())
+		c.Reshape(windowManager.WindowSize())
 	}
 
 	s.lights = nil

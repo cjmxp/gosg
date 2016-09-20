@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-func getDemo1SceneShadowTexture(s *core.Scene) core.Texture {
+func getDemoSceneShadowTexture(s *core.Scene) core.Texture {
 	geoRoot := s.Root().Children()[0]
 	lightNode := geoRoot.Children()[len(geoRoot.Children())-2]
 	return lightNode.Light().Shadower.RenderTarget().DepthTexture()
@@ -64,7 +64,7 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 	return geometryNode, geometryCamera
 }
 
-func makeDemo1Scene() *core.Scene {
+func makeDemoScene() *core.Scene {
 	s := core.NewScene("Demo1")
 	s.SetRoot(core.NewNode("ROOT"))
 

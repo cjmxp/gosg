@@ -1,6 +1,10 @@
 package core
 
-import "math"
+import (
+	"math"
+
+	"github.com/go-gl/glfw/v3.2/glfw"
+)
 
 // TimerHistogram is a generic histogram of values with a min/max range.
 type TimerHistogram struct {
@@ -57,7 +61,7 @@ func (ts *TimerManager) Paused() bool {
 
 // GetTime returns the system time in number of seconds since application startup.
 func (ts *TimerManager) GetTime() float64 {
-	return windowSystem.GetTime()
+	return glfw.GetTime()
 }
 
 // SetDt is called by windowsystem implementations to set the time elapsed since last refreshed.

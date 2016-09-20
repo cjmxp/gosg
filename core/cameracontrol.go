@@ -1,6 +1,9 @@
 package core
 
-import "github.com/go-gl/mathgl/mgl64"
+import (
+	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/go-gl/mathgl/mgl64"
+)
 
 // MouseCameraMoveCommand is a utility command for simple camera movement.
 type MouseCameraMoveCommand struct {
@@ -44,13 +47,13 @@ func (ic *MouseCameraInputComponent) Run(node *Node) []NodeCommand {
 	var commands []NodeCommand
 
 	// keyboard input
-	movementMap := make(map[int]mgl64.Vec3)
-	movementMap[KeyW] = mgl64.Vec3{0.0, 0.0, -1.0}
-	movementMap[KeyS] = mgl64.Vec3{0.0, 0.0, +1.0}
-	movementMap[KeyA] = mgl64.Vec3{-1.0, 0.0, 0.0}
-	movementMap[KeyD] = mgl64.Vec3{+1.0, 0.0, 0.0}
-	movementMap[KeyQ] = mgl64.Vec3{0.0, +1.0, 0.0}
-	movementMap[KeyZ] = mgl64.Vec3{0.0, -1.0, 0.0}
+	movementMap := make(map[glfw.Key]mgl64.Vec3)
+	movementMap[glfw.KeyW] = mgl64.Vec3{0.0, 0.0, -1.0}
+	movementMap[glfw.KeyS] = mgl64.Vec3{0.0, 0.0, +1.0}
+	movementMap[glfw.KeyA] = mgl64.Vec3{-1.0, 0.0, 0.0}
+	movementMap[glfw.KeyD] = mgl64.Vec3{+1.0, 0.0, 0.0}
+	movementMap[glfw.KeyQ] = mgl64.Vec3{0.0, +1.0, 0.0}
+	movementMap[glfw.KeyZ] = mgl64.Vec3{0.0, -1.0, 0.0}
 
 	var direction = mgl64.Vec3{0.0, 0.0, 0.0}
 	for k, v := range movementMap {

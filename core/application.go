@@ -1,5 +1,7 @@
 package core
 
+import "github.com/go-gl/glfw/v3.2/glfw"
+
 // ClientApplication is the client app, provided by the user
 type ClientApplication interface {
 	InputComponent() ClientApplicationInputComponent
@@ -27,8 +29,8 @@ type Application struct {
 // and calling the ClientApp constructor. On runloop termination, the Stop methods are
 // called in reverse order.
 func (app *Application) Start(acConstructor func() ClientApplication) {
-	// initialize all dynamic systems
-	windowSystem.Start()
+	windowManager.Start()
+
 	renderSystem.Start()
 	audioSystem.Start()
 	physicsSystem.Start()
@@ -40,7 +42,7 @@ func (app *Application) Start(acConstructor func() ClientApplication) {
 	app.client = acConstructor()
 
 	// step the windowsystem to force swap buffers before starting loop
-	windowSystem.Step()
+	windowManager.window.SwapBuffers()
 
 	// start main loop, all systems go
 	app.runLoop()
@@ -52,7 +54,8 @@ func (app *Application) Start(acConstructor func() ClientApplication) {
 	physicsSystem.Stop()
 	audioSystem.Stop()
 	renderSystem.Stop()
-	windowSystem.Stop()
+
+	glfw.Terminate()
 }
 
 func (app *Application) runLoop() {
@@ -60,7 +63,7 @@ func (app *Application) runLoop() {
 	var start = timerManager.GetTime()
 	var end = 0.0
 
-	for !app.client.Done() && !windowSystem.ShouldClose() {
+	for !app.client.Done() && !windowManager.ShouldClose() {
 		// run subsystem updates if not paused
 		app.update(dt)
 
@@ -89,21 +92,20 @@ func (app *Application) update(dt float64) {
 
 	// call game object updates
 	sceneManager.update(dt)
-	windowSystem.PollEvents()
 
 	// run the culler
 	sceneManager.cull()
-	windowSystem.PollEvents()
 
 	// draw the scenes
 	sceneManager.draw()
-	windowSystem.PollEvents()
-
-	// swap context buffers and poll for input
-	windowSystem.Step()
-	windowSystem.PollEvents()
 
 	// play audio
 	audioSystem.Step()
-	windowSystem.PollEvents()
+
+	// swap context buffers and poll for input
+	windowManager.window.SwapBuffers()
+	inputManager.reset()
+	glfw.PollEvents()
+	glfw.PollEvents()
+	glfw.PollEvents()
 }

@@ -8,6 +8,7 @@ import (
 	"unsafe"
 
 	"github.com/fcvarela/gosg/core"
+	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/golang/glog"
 )
@@ -101,13 +102,13 @@ func (i *IMGUISystem) SetNextWindowSize(size mgl32.Vec2) {
 // StartFrame implements the core.IMGUISystem interface
 func (i *IMGUISystem) StartFrame(dt float64) {
 	state := core.GetInputManager().State()
-	size := core.GetWindowSystem().WindowSize()
+	size := core.GetWindowManager().WindowSize()
 	i.SetDisplaySize(size)
-	i.SetMousePosition(core.GetWindowSystem().CursorPosition())
+	i.SetMousePosition(core.GetWindowManager().CursorPosition())
 	i.SetMouseButtons(
-		state.Mouse.Buttons.Active[core.MouseButton1],
-		state.Mouse.Buttons.Active[core.MouseButton2],
-		state.Mouse.Buttons.Active[core.MouseButton3])
+		state.Mouse.Buttons.Active[glfw.MouseButton1],
+		state.Mouse.Buttons.Active[glfw.MouseButton2],
+		state.Mouse.Buttons.Active[glfw.MouseButton3])
 	i.SetMouseScrollPosition(state.Mouse.Scroll.X, state.Mouse.Scroll.Y)
 
 	C.set_dt(C.double(dt))

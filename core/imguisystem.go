@@ -162,7 +162,7 @@ func newImguiNode(name string) *Node {
 func NewIMGUIScene(name string, inputComponent InputComponent) *Scene {
 	s := NewScene(name)
 
-	size := windowSystem.WindowSize()
+	size := windowManager.WindowSize()
 	camera := NewCamera("MainMenuCamera", OrthographicProjection)
 	camera.SetAutoReshape(true)
 	camera.SetClearMode(0)

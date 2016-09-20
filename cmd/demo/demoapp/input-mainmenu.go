@@ -19,7 +19,7 @@ func (u *demo1DebugMenuInputComponent) Run(n *core.Node) []core.NodeCommand {
 
 	// Metrics window
 	imguiSystem.SetNextWindowPos(mgl32.Vec2{0.0, 0.0})
-	imguiSystem.SetNextWindowSize(mgl32.Vec2{320.0, core.GetWindowSystem().WindowSize()[1]})
+	imguiSystem.SetNextWindowSize(mgl32.Vec2{320.0, core.GetWindowManager().WindowSize()[1]})
 	if imguiSystem.Begin("Inspector", core.WindowFlagsNoCollapse|core.WindowFlagsNoResize|core.WindowFlagsNoMove) {
 		if imguiSystem.CollapsingHeader("Frame Times") {
 			frameHistogram := timerManager.Histogram()

@@ -20,7 +20,7 @@ func NewClientApplication() core.ClientApplication {
 	c.inputComponent = new(applicationInputComponent)
 
 	// push the main scene into the scenemanager
-	core.GetSceneManager().PushScene(makeDemo1Scene())
+	core.GetSceneManager().PushScene(makeDemoScene())
 
 	// return
 	return &c

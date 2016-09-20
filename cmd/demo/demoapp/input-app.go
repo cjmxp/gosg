@@ -1,6 +1,9 @@
 package demoapp
 
-import "github.com/fcvarela/gosg/core"
+import (
+	"github.com/fcvarela/gosg/core"
+	"github.com/go-gl/glfw/v3.2/glfw"
+)
 
 // ApplicationInputComponent implements InputComponent
 type applicationInputComponent struct{}
@@ -9,20 +12,13 @@ type applicationInputComponent struct{}
 func (ic *applicationInputComponent) Run() (commands []core.ClientApplicationCommand) {
 	// check for quit key, append to command list
 	state := *core.GetInputManager().State()
-	if state.Keys.Active[core.KeyEscape] == true {
+
+	if state.Keys.Active[glfw.KeyEscape] == true {
 		commands = append(commands, new(clientApplicationQuitCommand))
 	}
 
-	if state.Keys.Active[core.Key1] == true {
-		commands = append(commands, new(clientApplicationShowDemo1Command))
-	}
-
-	if state.Keys.Active[core.Key2] == true {
-		commands = append(commands, new(clientApplicationShowDemo2Command))
-	}
-
 	// key-up, after down
-	if state.Keys.Released[core.KeyE] == true {
+	if state.Keys.Released[glfw.KeyE] == true {
 		commands = append(commands, new(clientApplicationToggleDebugMenuCommand))
 	}
 
