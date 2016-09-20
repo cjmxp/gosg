@@ -131,10 +131,8 @@ void main() {
 
     // init materials
     vec4 albedo = texture(albedoTex, tcoords0.st);
-
-    // will come from textures later
-    float metalness = 0.0;
-    float roughness = 0.3;
+    float metalness = texture(metalTex, tcoords0.st).a;
+    float roughness = metalness > 0.0 ? 0.1 : 0.3;
 
     // adjust f0 from 0.118 to 0.818, this will normally be discrete
     float f0 = 0.118 + metalness * 0.7; //max 0.818

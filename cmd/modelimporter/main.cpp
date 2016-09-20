@@ -3,9 +3,9 @@
 
 #include "model.pb.h"
 
-#include <assimp/cimport.h>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+#include <cimport.h>
+#include <scene.h>
+#include <postprocess.h>
 
 std::string load_texture(std::string fullpath);
 
@@ -21,17 +21,18 @@ int main(int argc, char **argv) {
 
     // set our global options. this will change
     auto opts = 0 |
-             aiProcessPreset_TargetRealtime_MaxQuality |
-            aiProcess_CalcTangentSpace |
-            aiProcess_FixInfacingNormals |
-            aiProcess_FlipUVs |
-            aiProcess_GenSmoothNormals |
-            aiProcess_ImproveCacheLocality |
-            aiProcess_TransformUVCoords |
-            aiProcess_Triangulate |
-            aiProcess_ValidateDataStructure |
-            aiProcess_OptimizeGraph |
-            aiProcess_OptimizeMeshes;
+                aiProcessPreset_TargetRealtime_MaxQuality |
+                aiProcess_CalcTangentSpace |
+                aiProcess_FixInfacingNormals |
+                aiProcess_FlipUVs |
+                aiProcess_JoinIdenticalVertices |
+                aiProcess_GenSmoothNormals |
+                aiProcess_ImproveCacheLocality |
+                aiProcess_TransformUVCoords |
+                aiProcess_Triangulate |
+                aiProcess_ValidateDataStructure |
+                aiProcess_OptimizeGraph |
+                aiProcess_OptimizeMeshes;
 
     auto scene = aiImportFile(modelfile.c_str(), opts);
     if (scene == nullptr) {
@@ -43,7 +44,10 @@ int main(int argc, char **argv) {
     auto model = new protos::Model();
 
     // iterate through meshes
-    for (int i=0; i<scene->mNumMeshes; i++) {
+    for (int i = 0; i < scene->mNumMeshes; i++) {
+        for (int b = 0; b < scene->mMeshes[i]->mNumBones; b++) {
+            std::cerr << "Bone: " << scene->mMeshes[i]->mBones[b]->mName.data << std::endl;
+        }
         auto vertexCount = scene->mMeshes[i]->mNumVertices;
 
         // create a mesh
@@ -53,21 +57,21 @@ int main(int argc, char **argv) {
         mesh->set_name(scene->mMeshes[i]->mName.data);
         std::cerr << "Processing mesh: " << mesh->name() << std::endl;
 
-		// set buffers
-        mesh->set_positions(scene->mMeshes[i]->mVertices, sizeof(float)*vertexCount*3);
-        mesh->set_normals(scene->mMeshes[i]->mNormals, sizeof(float)*vertexCount*3);
-        mesh->set_tangents(scene->mMeshes[i]->mTangents, sizeof(float)*vertexCount*3);
-        mesh->set_bitangents(scene->mMeshes[i]->mBitangents, sizeof(float)*vertexCount*3);
-        mesh->set_tcoords(scene->mMeshes[i]->mTextureCoords[0], sizeof(float)*vertexCount*3);
+        // set buffers
+        mesh->set_positions(scene->mMeshes[i]->mVertices, sizeof(float) * vertexCount * 3);
+        mesh->set_normals(scene->mMeshes[i]->mNormals, sizeof(float) * vertexCount * 3);
+        mesh->set_tangents(scene->mMeshes[i]->mTangents, sizeof(float) * vertexCount * 3);
+        mesh->set_bitangents(scene->mMeshes[i]->mBitangents, sizeof(float) * vertexCount * 3);
+        mesh->set_tcoords(scene->mMeshes[i]->mTextureCoords[0], sizeof(float) * vertexCount * 3);
 
         // indices are trickier, we're forcing uint16_t, may need to bump this for complex meshes
         auto indexBuffer = new uint16_t[scene->mMeshes[i]->mNumFaces * 3];
-        for (size_t f=0; f<scene->mMeshes[i]->mNumFaces; f++) {
-            indexBuffer[f*3+0] = scene->mMeshes[i]->mFaces[f].mIndices[0];
-            indexBuffer[f*3+1] = scene->mMeshes[i]->mFaces[f].mIndices[1];
-            indexBuffer[f*3+2] = scene->mMeshes[i]->mFaces[f].mIndices[2];
+        for (size_t f = 0; f < scene->mMeshes[i]->mNumFaces; f++) {
+            indexBuffer[f * 3 + 0] = (uint16_t)scene->mMeshes[i]->mFaces[f].mIndices[0];
+            indexBuffer[f * 3 + 1] = (uint16_t)scene->mMeshes[i]->mFaces[f].mIndices[1];
+            indexBuffer[f * 3 + 2] = (uint16_t)scene->mMeshes[i]->mFaces[f].mIndices[2];
         }
-        mesh->set_indices(indexBuffer, scene->mMeshes[i]->mNumFaces*3*sizeof(uint16_t));
+        mesh->set_indices(indexBuffer, scene->mMeshes[i]->mNumFaces * 3 * sizeof(uint16_t));
 
         // material and textures
         aiMaterial *mat = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
