@@ -5,7 +5,8 @@ import "github.com/go-gl/mathgl/mgl32"
 // LightBlock holds a light's properties. It is embedded in a sceneblock and
 // passed to every program.
 type LightBlock struct {
-	VPMatrix mgl32.Mat4
+	VPMatrix [maxCascades]mgl32.Mat4
+	ZCuts    [maxCascades]mgl32.Vec4
 	Position mgl32.Vec4
 	Color    mgl32.Vec4
 }

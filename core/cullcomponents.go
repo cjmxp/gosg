@@ -15,7 +15,7 @@ type DefaultCuller struct{}
 
 // Run implements the CullComponent interface
 func (cc *DefaultCuller) Run(scene *Scene, camera *Camera, node *Node) {
-	if node.worldBounds.InFrustum(camera.Frustum()) == false {
+	if node.worldBounds.InFrustum(camera.frustum) == false {
 		return
 	}
 
@@ -26,6 +26,9 @@ func (cc *DefaultCuller) Run(scene *Scene, camera *Camera, node *Node) {
 	// the default implementation is to add ourselves to the bucket
 	if node.mesh != nil {
 		camera.stateBuckets[node.state] = append(camera.stateBuckets[node.state], node)
+		if !node.state.Blending {
+			camera.visibleOpaqueNodes = append(camera.visibleOpaqueNodes, node)
+		}
 	}
 
 	for _, c := range node.children {

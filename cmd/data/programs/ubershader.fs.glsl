@@ -1,8 +1,11 @@
 #version 410 core
 
+#define MAX_CASCADES 10
+
 // global uniforms
 struct light {
-    mat4 vpMatrix;
+    mat4 vpMatrix[MAX_CASCADES];
+    vec4 zCuts[MAX_CASCADES];
     vec4 position;
     vec4 color;
 };
@@ -26,15 +29,18 @@ uniform sampler2D albedoTex;
 uniform sampler2D normalTex;
 uniform sampler2D roughTex;
 uniform sampler2D metalTex;
-uniform sampler2D shadowTex;
+
+uniform sampler2D shadowTex0;
+uniform sampler2D shadowTex1;
+uniform sampler2D shadowTex2;
+uniform sampler2D shadowTex3;
 
 float linstep(float low, float high, float v) {
     return clamp((v - low) / (high - low), 0.0, 1.0);
 }
 
-float varianceShadowMap(vec2 coords, float compare) {
+float varianceShadowMap(sampler2D shadowTex, vec2 coords, float compare) {
     vec2 moments = texture(shadowTex, coords.xy).xy;
-
     float p = step(compare, moments.x);
     float variance = max(moments.y - moments.x * moments.x, 0.0000001);
 
@@ -44,10 +50,39 @@ float varianceShadowMap(vec2 coords, float compare) {
     return min(max(p, pMax), 1.0);
 }
 
-float shadow(vec4 coords) {
-    vec3 shadowMapCoords = coords.xyz/coords.w;
-    float compare = shadowMapCoords.z;
-    return varianceShadowMap(shadowMapCoords.xy, compare);
+float shadow(vec4 coords, int lightIndex) {
+    const int numCascades = 4;
+
+    float combined = 0.0;
+
+    vec4 ccoords[numCascades];
+    float compare[numCascades];
+
+    for (int i=0; i<numCascades; i++) {
+        ccoords[i] = lights[lightIndex].vpMatrix[i] * coords;
+        vec3 shadowMapCoords = ccoords[i].xyz/ccoords[i].w;
+        compare[i] = ccoords[i].z;
+    }
+
+    float fragZV = length(cameraPosition-position);
+
+    if (fragZV < lights[lightIndex].zCuts[0].x) {
+        return varianceShadowMap(shadowTex0, ccoords[0].xy, compare[0]);
+    }
+
+    if (fragZV < lights[lightIndex].zCuts[1].x) {
+        return varianceShadowMap(shadowTex1, ccoords[1].xy, compare[1]);
+    }
+
+    if (fragZV < lights[lightIndex].zCuts[2].x) {
+        return varianceShadowMap(shadowTex2, ccoords[2].xy, compare[2]);
+    }
+
+    if (fragZV < lights[lightIndex].zCuts[3].x) {
+        return varianceShadowMap(shadowTex3, ccoords[3].xy, compare[3]);
+    }
+
+    return 1.0;
 }
 
 const float A = 0.15;
@@ -135,7 +170,7 @@ void main() {
 
         vec3 color_spec = NdotL_clamped * brdf_spec * lights[i].color.rgb;
         vec3 color_diff = NdotL_clamped * diffuse_energy_ratio(f0, N, L) * albedo.rgb * lights[i].color.rgb;
-        color.rgb += (color_diff + color_spec) * shadow(lights[i].vpMatrix * vec4(position, 1.0));
+        color.rgb += (color_diff + color_spec) * shadow(vec4(position, 1.0), i);
     }
 
     color.a = albedo.a;

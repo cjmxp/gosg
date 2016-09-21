@@ -108,6 +108,7 @@ func (s *Scene) cull() {
 	for _, c := range s.cameraList {
 		for bk, _ := range c.stateBuckets {
 			c.stateBuckets[bk] = c.stateBuckets[bk][:0]
+			c.visibleOpaqueNodes = c.visibleOpaqueNodes[:0]
 		}
 
 		c.scene.CullComponent().Run(s, c, c.scene)
@@ -115,6 +116,7 @@ func (s *Scene) cull() {
 		for bk, _ := range c.stateBuckets {
 			sort.Sort(NodesByMaterial(c.stateBuckets[bk]))
 		}
+		sort.Sort(NodesByCameraDistanceNearToFar{c.visibleOpaqueNodes, c.node})
 	}
 }
 
@@ -125,8 +127,8 @@ func (s *Scene) draw() {
 		if camera.projectionType == PerspectiveProjection {
 			for _, light := range s.lights {
 				if light.Shadower != nil {
-					shadowStage := light.Shadower.RenderStage(light, camera.stateBuckets)
-					p.Stages = append(p.Stages, shadowStage)
+					shadowStages := light.Shadower.RenderStages(light, camera)
+					p.Stages = append(p.Stages, shadowStages...)
 				}
 			}
 		}

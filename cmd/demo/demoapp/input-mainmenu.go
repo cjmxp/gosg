@@ -8,7 +8,7 @@ import (
 )
 
 type demo1DebugMenuInputComponent struct {
-	shadowTexture core.Texture
+	shadowTextures []core.Texture
 }
 
 func (u *demo1DebugMenuInputComponent) Run(n *core.Node) []core.NodeCommand {
@@ -27,8 +27,11 @@ func (u *demo1DebugMenuInputComponent) Run(n *core.Node) []core.NodeCommand {
 			imguiSystem.PlotHistogram(fpsLabel, frameHistogram.Values, 0.0, frameHistogram.Max, mgl32.Vec2{0.0, 60.0})
 		}
 
-		if imguiSystem.CollapsingHeader("ShadowTexture") {
-			imguiSystem.Image(u.shadowTexture, mgl32.Vec2{256.0, 256.0})
+		if imguiSystem.CollapsingHeader("ShadowTextures") {
+			imguiSystem.Image(u.shadowTextures[0], mgl32.Vec2{128.0, 128.0})
+			imguiSystem.Image(u.shadowTextures[1], mgl32.Vec2{128.0, 128.0})
+			imguiSystem.Image(u.shadowTextures[2], mgl32.Vec2{128.0, 128.0})
+			imguiSystem.Image(u.shadowTextures[3], mgl32.Vec2{128.0, 128.0})
 		}
 	}
 

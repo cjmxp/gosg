@@ -6,10 +6,10 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-func getDemoSceneShadowTexture(s *core.Scene) core.Texture {
+func getDemoSceneShadowTextures(s *core.Scene) []core.Texture {
 	geoRoot := s.Root().Children()[0]
 	lightNode := geoRoot.Children()[len(geoRoot.Children())-2]
-	return lightNode.Light().Shadower.RenderTarget().DepthTexture()
+	return lightNode.Light().Shadower.Textures()
 }
 
 func makeGeometrySubscene() (*core.Node, *core.Camera) {
@@ -19,7 +19,7 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 	geometryCamera.SetVerticalFieldOfView(60.0)
 	geometryCamera.SetClearColor(mgl32.Vec4{135.0 / 255.0, 206.0 / 255.0, 250.0 / 255.0, 0.0})
 	geometryCamera.SetClearMode(core.ClearColor | core.ClearDepth)
-	geometryCamera.SetClipDistance(mgl64.Vec2{1.0, 1000.0})
+	geometryCamera.SetClipDistance(mgl64.Vec2{1.0, 250.0})
 	geometryCamera.Node().SetInputComponent(core.NewMouseCameraInputComponent(100.0))
 	geometryCamera.SetRenderOrder(0)
 
@@ -50,7 +50,6 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 	lightNode1.Translate(mgl64.Vec3{+1000.0, 0.0, +1000.0})
 	light1 := &core.Light{
 		Block: core.LightBlock{
-			// position is only used to determine light type (w component)
 			Position: mgl32.Vec4{0.0, 0.0, 0.0, 1.0},
 			Color:    mgl32.Vec4{1.0, 1.0, 1.0, 1.0},
 		},

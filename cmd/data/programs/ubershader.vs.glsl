@@ -1,8 +1,11 @@
 #version 410 core
 
+#define MAX_CASCADES 10
+
 // global uniforms
 struct light {
-    mat4 vpMatrix;
+    mat4 vpMatrix[MAX_CASCADES];
+    vec4 zCuts[MAX_CASCADES];
     vec4 position;
     vec4 color;
 };

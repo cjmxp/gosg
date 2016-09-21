@@ -3,6 +3,8 @@ package core
 import (
 	"math"
 
+	"fmt"
+
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -53,6 +55,11 @@ func (a *AABB) ExtendWithPoint(ip mgl64.Vec3) {
 func (a *AABB) ExtendWithBox(ib *AABB) {
 	a.ExtendWithPoint(ib.min)
 	a.ExtendWithPoint(ib.max)
+}
+
+// String implements the stringer interface
+func (a *AABB) String() string {
+	return fmt.Sprintf("AABB min: %v max: %v", a.min, a.max)
 }
 
 // ContainsBox returns whether the bounding volume fully contains the volume

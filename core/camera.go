@@ -4,6 +4,8 @@ import (
 	"runtime"
 	"unsafe"
 
+	"math"
+
 	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -42,26 +44,29 @@ type RenderStageFn func(c *Camera, materialBuckets map[*protos.State][]*Node) Re
 // the scenegraph, as well as clipping distances (near, far planes) and render
 // ordering, target and techniques.
 type Camera struct {
-	name             string
-	autoReshape      bool
-	projectionType   ProjectionType
-	clearColor       mgl32.Vec4
-	clearDepth       float64
-	clearMode        RenderTargetClearMode
-	node             *Node
-	scene            *Node
-	viewMatrix       mgl64.Mat4
-	projectionMatrix mgl64.Mat4
-	viewport         mgl32.Vec4
-	vertFOV          float64
-	clipDistance     mgl64.Vec2
-	dirty            bool
-	renderOrder      uint8
-	renderTarget     RenderTarget
-	frustum          [6]mgl64.Vec4
-	constants        *CameraConstants
-	renderTechnique  RenderStageFn
-	stateBuckets     map[*protos.State][]*Node
+	name               string
+	autoReshape        bool
+	projectionType     ProjectionType
+	clearColor         mgl32.Vec4
+	clearDepth         float64
+	clearMode          RenderTargetClearMode
+	node               *Node
+	scene              *Node
+	viewMatrix         mgl64.Mat4
+	projectionMatrix   mgl64.Mat4
+	viewport           mgl32.Vec4
+	vertFOV            float64
+	clipDistance       mgl64.Vec2
+	dirty              bool
+	renderOrder        uint8
+	renderTarget       RenderTarget
+	frustum            [6]mgl64.Vec4
+	cascadingAABBS     [maxCascades]*AABB
+	cascadingZCuts     [maxCascades]float64
+	constants          *CameraConstants
+	renderTechnique    RenderStageFn
+	stateBuckets       map[*protos.State][]*Node
+	visibleOpaqueNodes []*Node
 }
 
 // CamerasByRenderOrder is used to sort cameras by the render order field.
@@ -103,6 +108,7 @@ func NewCamera(name string, projType ProjectionType) *Camera {
 	cam.constants = NewCameraConstants()
 	cam.renderTechnique = DefaultRenderTechnique
 	cam.stateBuckets = make(map[*protos.State][]*Node)
+	cam.visibleOpaqueNodes = make([]*Node, 0)
 
 	runtime.SetFinalizer(&cam, deleteCamera)
 	return &cam
@@ -192,24 +198,56 @@ func (c *Camera) Reshape(windowSize mgl32.Vec2) {
 		c.dirty = false
 	}
 
-	viewProj := c.projectionMatrix.Mul4(c.viewMatrix)
+	var worldVisibleRange = c.clipDistance[1] - c.clipDistance[0]
+	var minRange, maxRange = c.clipDistance[0], float64(0)
+	for cascade := 0; cascade < numCascades; cascade++ {
+		maxRange = worldVisibleRange / (math.Pow(2, 2*float64(numCascades-cascade-1)))
+		var projectionMatrix = mgl64.Perspective(mgl64.DegToRad(c.vertFOV), float64(c.viewport[2]/c.viewport[3]), minRange, maxRange)
+		var frustumCorners = [8]mgl64.Vec3{
+			{-1, -1, -1},
+			{+1, -1, -1},
+			{-1, +1, -1},
+			{+1, +1, -1},
+			{-1, -1, +1},
+			{+1, -1, +1},
+			{-1, +1, +1},
+			{+1, +1, +1},
+		}
+
+		c.cascadingAABBS[cascade] = NewAABB()
+		var invProjectionMatrix = projectionMatrix.Mul4(c.viewMatrix).Inv()
+
+		for p := range frustumCorners {
+			c.cascadingAABBS[cascade].ExtendWithPoint(mgl64.TransformCoordinate(frustumCorners[p], invProjectionMatrix))
+		}
+		c.cascadingZCuts[cascade] = maxRange
+		minRange = maxRange
+	}
+
+	c.frustum = MakeFrustum(c.projectionMatrix, c.viewMatrix)
+}
+
+func MakeFrustum(p, v mgl64.Mat4) (f [6]mgl64.Vec4) {
+	viewProj := p.Mul4(v)
 	rowX := viewProj.Row(0)
 	rowY := viewProj.Row(1)
 	rowZ := viewProj.Row(2)
 	rowW := viewProj.Row(3)
 
-	c.frustum[0] = rowW.Add(rowX)
-	c.frustum[1] = rowW.Sub(rowX)
-	c.frustum[2] = rowW.Add(rowY)
-	c.frustum[3] = rowW.Sub(rowY)
-	c.frustum[4] = rowW.Add(rowZ)
-	c.frustum[5] = rowW.Sub(rowZ)
+	f[0] = rowW.Add(rowX)
+	f[1] = rowW.Sub(rowX)
+	f[2] = rowW.Add(rowY)
+	f[3] = rowW.Sub(rowY)
+	f[4] = rowW.Add(rowZ)
+	f[5] = rowW.Sub(rowZ)
 
 	// normalize planes
-	for i := range c.frustum {
-		len := c.frustum[i].Vec3().Len()
-		c.frustum[i] = c.frustum[i].Mul(1.0 / len)
+	for i := range f {
+		len := f[i].Vec3().Len()
+		f[i] = f[i].Mul(1.0 / len)
 	}
+
+	return f
 }
 
 // SetProjectionMatrix sets the camera's projection matrix.
@@ -307,9 +345,10 @@ type CameraConstants struct {
 	buffer UniformBuffer
 }
 
-const (
+var (
+	lightBlockLen = (maxCascades*16 + maxCascades*4 + 4 + 4)
 	// 16 lights * 16 floats per light + 4 floats lightcount, all mult4 (sizeof float)
-	sceneBlockLen = (3*16 + 16*16 + 4) * 4
+	sceneBlockLen = (3*16 + 16*lightBlockLen + 4) * 4
 )
 
 // NewCameraConstants returns a new CameraConstants. The UniformBuffer is returned by the rendersystem.

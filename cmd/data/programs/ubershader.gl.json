@@ -12,6 +12,9 @@
     "normalTex": 1,
     "roughTex": 2,
     "metalTex": 3,
-    "shadowTex": 4
+    "shadowTex0": 4,
+    "shadowTex1": 5,
+    "shadowTex2": 6,
+    "shadowTex3": 7
   }
 }
