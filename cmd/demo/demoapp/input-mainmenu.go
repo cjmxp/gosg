@@ -31,7 +31,6 @@ func (u *demo1DebugMenuInputComponent) Run(n *core.Node) []core.NodeCommand {
 			imguiSystem.Image(u.shadowTextures[0], mgl32.Vec2{128.0, 128.0})
 			imguiSystem.Image(u.shadowTextures[1], mgl32.Vec2{128.0, 128.0})
 			imguiSystem.Image(u.shadowTextures[2], mgl32.Vec2{128.0, 128.0})
-			imguiSystem.Image(u.shadowTextures[3], mgl32.Vec2{128.0, 128.0})
 		}
 	}
 
