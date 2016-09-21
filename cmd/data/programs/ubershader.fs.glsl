@@ -51,35 +51,27 @@ float varianceShadowMap(sampler2D shadowTex, vec2 coords, float compare) {
 }
 
 float shadow(vec4 coords, int lightIndex) {
-    const int numCascades = 4;
+    const int numCascades = 3;
 
-    float combined = 0.0;
-
-    vec4 ccoords[numCascades];
-    float compare[numCascades];
+    vec3 shadowMapCoords[numCascades];
 
     for (int i=0; i<numCascades; i++) {
-        ccoords[i] = lights[lightIndex].vpMatrix[i] * coords;
-        vec3 shadowMapCoords = ccoords[i].xyz/ccoords[i].w;
-        compare[i] = ccoords[i].z;
+        vec4 ccoords = lights[lightIndex].vpMatrix[i] * coords;
+        shadowMapCoords[i] = ccoords.xyz/ccoords.w;
     }
 
     float fragZV = length(cameraPosition-position);
 
     if (fragZV < lights[lightIndex].zCuts[0].x) {
-        return varianceShadowMap(shadowTex0, ccoords[0].xy, compare[0]);
+        return varianceShadowMap(shadowTex0, shadowMapCoords[0].xy, shadowMapCoords[0].z);
     }
 
     if (fragZV < lights[lightIndex].zCuts[1].x) {
-        return varianceShadowMap(shadowTex1, ccoords[1].xy, compare[1]);
+        return varianceShadowMap(shadowTex1, shadowMapCoords[1].xy, shadowMapCoords[1].z);
     }
 
     if (fragZV < lights[lightIndex].zCuts[2].x) {
-        return varianceShadowMap(shadowTex2, ccoords[2].xy, compare[2]);
-    }
-
-    if (fragZV < lights[lightIndex].zCuts[3].x) {
-        return varianceShadowMap(shadowTex3, ccoords[3].xy, compare[3]);
+        return varianceShadowMap(shadowTex2, shadowMapCoords[2].xy, shadowMapCoords[2].z);
     }
 
     return 1.0;

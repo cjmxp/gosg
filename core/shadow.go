@@ -26,7 +26,7 @@ type ShadowMap struct {
 }
 
 const (
-	numCascades = 4
+	numCascades = 3
 	maxCascades = 10
 )
 
