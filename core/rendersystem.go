@@ -36,7 +36,7 @@ type RenderSystem interface {
 	// This always generates RGBA, unsigned byte, power of two and will generate mipmaps
 	// levels from smallest dimension, ie: 2048x1024 = 10 mipmap levels; log2(1024)
 	// It also defaults to ClampEdge and mipmapped filtering.
-	NewTextureFromImageData(r []byte) Texture
+	NewTextureFromImageData(r []byte, d TextureDescriptor) Texture
 
 	// NewUniform creates a new empty uniform
 	NewUniform() Uniform

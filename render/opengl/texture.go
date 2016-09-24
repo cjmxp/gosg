@@ -52,7 +52,7 @@ func textureCleanup(t *Texture) {
 }
 
 // NewTexture implements the core.RenderSystem interface
-func (rs *RenderSystem) NewTextureFromImageData(data []byte) core.Texture {
+func (rs *RenderSystem) NewTextureFromImageData(data []byte, descriptor core.TextureDescriptor) core.Texture {
 	if data == nil {
 		glog.Fatal("Cannot read texture...")
 	}
@@ -68,17 +68,12 @@ func (rs *RenderSystem) NewTextureFromImageData(data []byte) core.Texture {
 	}
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-	descriptor := core.TextureDescriptor{
-		Width:         uint32(rgba.Rect.Size().X),
-		Height:        uint32(rgba.Rect.Size().Y),
-		Mipmaps:       true,
-		Target:        core.TextureTarget2D,
-		Format:        core.TextureFormatRGBA,
-		SizedFormat:   core.TextureSizedFormatRGBA8,
-		ComponentType: core.TextureComponentTypeUNSIGNEDBYTE,
-		Filter:        core.TextureFilterMipmapLinear,
-		WrapMode:      core.TextureWrapModeClampEdge,
-	}
+	descriptor.Width = uint32(rgba.Rect.Size().X)
+	descriptor.Height = uint32(rgba.Rect.Size().Y)
+	descriptor.Target = core.TextureTarget2D
+	descriptor.Format = core.TextureFormatRGBA
+	descriptor.SizedFormat = core.TextureSizedFormatRGBA8
+	descriptor.ComponentType = core.TextureComponentTypeUNSIGNEDBYTE
 
 	return rs.NewTexture(descriptor, rgba.Pix)
 }
@@ -116,6 +111,8 @@ func (rs *RenderSystem) NewTexture(d core.TextureDescriptor, data []byte) core.T
 		wrapMode = gl.CLAMP_TO_BORDER
 	case core.TextureWrapModeClampEdge:
 		wrapMode = gl.CLAMP_TO_EDGE
+	case core.TextureWrapModeRepeat:
+		wrapMode = gl.REPEAT
 	default:
 		glog.Fatalf("Texture wrap mode %v not implemented: ", d.WrapMode)
 	}

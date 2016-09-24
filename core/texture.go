@@ -57,6 +57,7 @@ type TextureWrapMode int
 const (
 	TextureWrapModeClampEdge TextureWrapMode = iota
 	TextureWrapModeClampBorder
+	TextureWrapModeRepeat
 )
 
 type TextureFilter int
