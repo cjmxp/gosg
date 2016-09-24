@@ -277,7 +277,7 @@ func (m *IMGUIMesh) Draw() {
 		var elementIndex int
 		for _, cmd := range cmdlist.Commands {
 			if tex := (*Texture)(cmd.TextureID); tex != nil {
-				gl.BindTexture(gl.TEXTURE_2D, tex.ID)
+				gl.BindTexture(gl.TEXTURE_2D, tex.id)
 				gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 			}
 

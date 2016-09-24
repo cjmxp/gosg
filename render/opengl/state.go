@@ -137,7 +137,7 @@ func breaksBatch(a *core.MaterialData, b *core.MaterialData) bool {
 			return true
 		}
 
-		if ta.(*Texture).ID != tb.(*Texture).ID {
+		if ta.(*Texture).id != tb.(*Texture).id {
 			return true
 		}
 	}

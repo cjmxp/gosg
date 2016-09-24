@@ -1,10 +1,9 @@
 package core
 
 import (
+	"math"
 	"runtime"
 	"unsafe"
-
-	"math"
 
 	"github.com/fcvarela/gosg/protos"
 	"github.com/go-gl/mathgl/mgl32"
@@ -15,7 +14,7 @@ import (
 // ProjectionType is used to express projection types (ie: perspective, orthographic).
 type ProjectionType uint8
 
-// ClearMode is used to express the type of framebuffer clearing which will be executed
+// RenderTargetClearMode is used to express the type of framebuffer clearing which will be executed
 // before the rendering logic is called.
 type RenderTargetClearMode uint8
 
@@ -227,6 +226,7 @@ func (c *Camera) Reshape(windowSize mgl32.Vec2) {
 	c.frustum = MakeFrustum(c.projectionMatrix, c.viewMatrix)
 }
 
+// MakeFrustum creates a frustum's 6 planes from a projection and view matrix
 func MakeFrustum(p, v mgl64.Mat4) (f [6]mgl64.Vec4) {
 	viewProj := p.Mul4(v)
 	rowX := viewProj.Row(0)
@@ -356,7 +356,7 @@ func NewCameraConstants() *CameraConstants {
 	return &CameraConstants{innerConstants{}, renderSystem.NewUniformBuffer()}
 }
 
-// SetMatrices sets matrices and light information for the entire scene
+// SetData sets matrices and light information for the entire scene
 func (sb *CameraConstants) SetData(pMatrix, vMatrix mgl64.Mat4, l []*Light) {
 	// matrices
 	sb.inner.ViewMatrix = Mat4DoubleToFloat(vMatrix)

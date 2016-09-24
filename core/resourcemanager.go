@@ -118,12 +118,3 @@ func (r *ResourceManager) State(name string) *protos.State {
 func (r *ResourceManager) ProgramData(name string) []byte {
 	return r.system.ProgramData(name)
 }
-
-// Texture returns a Texture.
-func (r *ResourceManager) Texture(name string) Texture {
-	if r.textures[name] == nil {
-		resource := r.system.Texture(name)
-		r.textures[name] = renderSystem.NewTexture(resource)
-	}
-	return r.textures[name]
-}
