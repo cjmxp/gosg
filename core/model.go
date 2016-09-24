@@ -28,20 +28,30 @@ func LoadModel(name string, res []byte) *Node {
 		node.state = resourceManager.State(model.Meshes[i].State)
 
 		// get textures
+		textureDescriptor := TextureDescriptor{
+			Mipmaps:  true,
+			Filter:   TextureFilterMipmapLinear,
+			WrapMode: TextureWrapModeRepeat,
+		}
+
 		if len(model.Meshes[i].AlbedoMap) > 0 {
-			node.MaterialData().SetTexture("albedoTex", renderSystem.NewTexture(model.Meshes[i].AlbedoMap))
+			var albedoTexture = renderSystem.NewTextureFromImageData(model.Meshes[i].AlbedoMap, textureDescriptor)
+			node.MaterialData().SetTexture("albedoTex", albedoTexture)
 		}
 
 		if len(model.Meshes[i].NormalMap) > 0 {
-			node.MaterialData().SetTexture("normalTex", renderSystem.NewTexture(model.Meshes[i].NormalMap))
+			var normalTexture = renderSystem.NewTextureFromImageData(model.Meshes[i].NormalMap, textureDescriptor)
+			node.MaterialData().SetTexture("normalTex", normalTexture)
 		}
 
 		if len(model.Meshes[i].RoughMap) > 0 {
-			node.MaterialData().SetTexture("roughTex", renderSystem.NewTexture(model.Meshes[i].RoughMap))
+			var roughTexture = renderSystem.NewTextureFromImageData(model.Meshes[i].RoughMap, textureDescriptor)
+			node.MaterialData().SetTexture("roughTex", roughTexture)
 		}
 
 		if len(model.Meshes[i].MetalMap) > 0 {
-			node.MaterialData().SetTexture("metalTex", renderSystem.NewTexture(model.Meshes[i].MetalMap))
+			var metalTexture = renderSystem.NewTextureFromImageData(model.Meshes[i].MetalMap, textureDescriptor)
+			node.MaterialData().SetTexture("metalTex", metalTexture)
 		}
 
 		// set mesh data

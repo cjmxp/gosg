@@ -17,7 +17,7 @@ func makeGeometrySubscene() (*core.Node, *core.Camera) {
 	geometryCamera := core.NewCamera("GeometryPassCamera", core.PerspectiveProjection)
 	geometryCamera.SetAutoReshape(true)
 	geometryCamera.SetVerticalFieldOfView(60.0)
-	geometryCamera.SetClearColor(mgl32.Vec4{135.0 / 255.0, 206.0 / 255.0, 250.0 / 255.0, 0.0})
+	geometryCamera.SetClearColor(mgl32.Vec4{0.4, 0.6, 0.9, 1.0})
 	geometryCamera.SetClearMode(core.ClearColor | core.ClearDepth)
 	geometryCamera.SetClipDistance(mgl64.Vec2{1.0, 250.0})
 	geometryCamera.Node().SetInputComponent(core.NewMouseCameraInputComponent(100.0))

@@ -1,9 +1,8 @@
 package core
 
 import (
-	"math"
-
 	"fmt"
+	"math"
 
 	"github.com/go-gl/mathgl/mgl64"
 )

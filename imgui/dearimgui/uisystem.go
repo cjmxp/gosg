@@ -43,7 +43,18 @@ func (i *IMGUISystem) getTextureData() textureData {
 // Start implements the core.IMGUISystem interface
 func (i *IMGUISystem) Start() {
 	tdata := i.getTextureData()
-	i.texture = core.GetRenderSystem().NewRawTexture(tdata.width, tdata.height, tdata.payload)
+	textureDescriptor := core.TextureDescriptor{
+		Width:         uint32(tdata.width),
+		Height:        uint32(tdata.height),
+		Mipmaps:       false,
+		Target:        core.TextureTarget2D,
+		Format:        core.TextureFormatRGBA,
+		SizedFormat:   core.TextureSizedFormatRGBA8,
+		ComponentType: core.TextureComponentTypeUNSIGNEDBYTE,
+		Filter:        core.TextureFilterLinear,
+		WrapMode:      core.TextureWrapModeClampEdge,
+	}
+	i.texture = core.GetRenderSystem().NewTexture(textureDescriptor, tdata.payload)
 	if i.texture == nil {
 		glog.Fatal("Cannot set nil texture")
 	}

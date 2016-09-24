@@ -18,7 +18,12 @@ import (
 
 // Texture is an OpenGL texture container
 type Texture struct {
-	ID uint32
+	id         uint32
+	descriptor core.TextureDescriptor
+}
+
+func (t *Texture) Descriptor() core.TextureDescriptor {
+	return t.descriptor
 }
 
 // Handle implements the core.Texture interface
@@ -29,7 +34,7 @@ func (t *Texture) Handle() unsafe.Pointer {
 // Lt implements the core.Texture interface
 func (t *Texture) Lt(other core.Texture) bool {
 	if ot, ok := other.(*Texture); ok {
-		return t.ID < ot.ID
+		return t.id < ot.id
 	}
 	return true
 }
@@ -37,17 +42,17 @@ func (t *Texture) Lt(other core.Texture) bool {
 // Gt implements the core.Texture interface
 func (t *Texture) Gt(other core.Texture) bool {
 	if ot, ok := other.(*Texture); ok {
-		return t.ID > ot.ID
+		return t.id > ot.id
 	}
 	return false
 }
 
 func textureCleanup(t *Texture) {
-	glog.Info("Deleting texture: ", t.ID)
+	glog.Info("Deleting texture: ", t.id)
 }
 
 // NewTexture implements the core.RenderSystem interface
-func (rs *RenderSystem) NewTexture(data []byte) core.Texture {
+func (rs *RenderSystem) NewTextureFromImageData(data []byte, descriptor core.TextureDescriptor) core.Texture {
 	if data == nil {
 		glog.Fatal("Cannot read texture...")
 	}
@@ -63,54 +68,162 @@ func (rs *RenderSystem) NewTexture(data []byte) core.Texture {
 	}
 	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
 
-	width, height := int32(rgba.Rect.Size().X), int32(rgba.Rect.Size().Y)
-	mipmapCount := int32(math.Log2(float64(width)))
+	descriptor.Width = uint32(rgba.Rect.Size().X)
+	descriptor.Height = uint32(rgba.Rect.Size().Y)
+	descriptor.Target = core.TextureTarget2D
+	descriptor.Format = core.TextureFormatRGBA
+	descriptor.SizedFormat = core.TextureSizedFormatRGBA8
+	descriptor.ComponentType = core.TextureComponentTypeUNSIGNEDBYTE
 
-	texture := uint32(0)
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexStorage2D(gl.TEXTURE_2D, mipmapCount, gl.RGBA8, width, height)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
-	gl.TexSubImage2D(
-		gl.TEXTURE_2D,
-		0,
-		0,
-		0,
-		width,
-		height,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix))
-
-	gl.GenerateMipmap(gl.TEXTURE_2D)
-
-	t := &Texture{texture}
-	runtime.SetFinalizer(t, textureCleanup)
-	return t
+	return rs.NewTexture(descriptor, rgba.Pix)
 }
 
 // NewRawTexture implements the core.RenderSystem interface
-func (rs *RenderSystem) NewRawTexture(width, height int, payload []byte) core.Texture {
+func (rs *RenderSystem) NewTexture(d core.TextureDescriptor, data []byte) core.Texture {
+	var target uint32
+	switch d.Target {
+	case core.TextureTarget2D:
+		target = gl.TEXTURE_2D
+	default:
+		glog.Fatalf("Texture target %v not implemented: ", d.Target)
+	}
+
+	// sampling filter
+	var minFilter, magFilter int32
+	switch d.Filter {
+	case core.TextureFilterMipmapLinear:
+		minFilter = gl.LINEAR_MIPMAP_LINEAR
+		magFilter = gl.LINEAR
+	case core.TextureFilterLinear:
+		minFilter = gl.LINEAR
+		magFilter = gl.LINEAR
+	case core.TextureFilterNearest:
+		minFilter = gl.NEAREST
+		magFilter = gl.NEAREST
+	default:
+		glog.Fatalf("Texture filter %v not implemented: ", d.Filter)
+	}
+
+	// sampling wrap mode
+	var wrapMode int32
+	switch d.WrapMode {
+	case core.TextureWrapModeClampBorder:
+		wrapMode = gl.CLAMP_TO_BORDER
+	case core.TextureWrapModeClampEdge:
+		wrapMode = gl.CLAMP_TO_EDGE
+	case core.TextureWrapModeRepeat:
+		wrapMode = gl.REPEAT
+	default:
+		glog.Fatalf("Texture wrap mode %v not implemented: ", d.WrapMode)
+	}
+
+	// internal format
+	var internalFormat uint32
+	switch d.SizedFormat {
+	case core.TextureSizedFormatR8:
+		internalFormat = gl.R8
+	case core.TextureSizedFormatR16F:
+		internalFormat = gl.R16F
+	case core.TextureSizedFormatR32F:
+		internalFormat = gl.R32F
+	case core.TextureSizedFormatRG8:
+		internalFormat = gl.RG8
+	case core.TextureSizedFormatRG16F:
+		internalFormat = gl.RG16F
+	case core.TextureSizedFormatRG32F:
+		internalFormat = gl.RG32F
+	case core.TextureSizedFormatRGB8:
+		internalFormat = gl.RGB
+	case core.TextureSizedFormatRGB16F:
+		internalFormat = gl.RGB16F
+	case core.TextureSizedFormatRGB32F:
+		internalFormat = gl.RGB32F
+	case core.TextureSizedFormatRGBA8:
+		internalFormat = gl.RGBA8
+	case core.TextureSizedFormatRGBA16F:
+		internalFormat = gl.RGBA16F
+	case core.TextureSizedFormatRGBA32F:
+		internalFormat = gl.RGBA32F
+	case core.TextureSizedFormatDEPTH32F:
+		internalFormat = gl.DEPTH_COMPONENT32F
+	default:
+		glog.Fatalf("Texture sized format %v not implemented: ", d.SizedFormat)
+	}
+
+	// format of data we're passing
+	var format uint32
+	switch d.Format {
+	case core.TextureFormatR:
+		format = gl.RED
+	case core.TextureFormatRG:
+		format = gl.RG
+	case core.TextureFormatRGB:
+		format = gl.RGB
+	case core.TextureFormatRGBA:
+		format = gl.RGBA
+	case core.TextureFormatDEPTH:
+		format = gl.DEPTH
+	default:
+		glog.Fatalf("Texture format %v not implemented: ", d.Format)
+	}
+
+	// component type of each channel px
+	var componentType uint32
+	switch d.ComponentType {
+	case core.TextureComponentTypeUNSIGNEDBYTE:
+		componentType = gl.UNSIGNED_BYTE
+	case core.TextureComponentTypeFLOAT:
+		componentType = gl.FLOAT
+	default:
+		glog.Fatalf("Component type %v not implemented: ", d.Format)
+	}
+
+	// mipmaps
+	var mipmapCount = 0
+	if d.Mipmaps {
+		mipmapCount = int(math.Log2(float64(d.Width)))
+		if d.Height < d.Width {
+			mipmapCount = int(math.Log2(float64(d.Height)))
+		}
+	}
+	mipmapCount += 1
+
+	// bind the target type
 	texture := uint32(0)
 	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		gl.RGBA,
-		int32(width),
-		int32(height),
-		0,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(payload))
+	gl.BindTexture(target, texture)
 
-	t := &Texture{texture}
+	// set filtering
+	gl.TexParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
+	gl.TexParameteri(target, gl.TEXTURE_MAG_FILTER, magFilter)
+
+	// set wrap mode
+	gl.TexParameteri(target, gl.TEXTURE_WRAP_S, wrapMode)
+	gl.TexParameteri(target, gl.TEXTURE_WRAP_T, wrapMode)
+
+	// allocate memory
+	gl.TexStorage2D(target, int32(mipmapCount), internalFormat, int32(d.Width), int32(d.Height))
+
+	// set data
+	// this texture's storage has already been allocated, just copy the data
+	if data != nil {
+		gl.TexSubImage2D(
+			target,
+			0,
+			0,
+			0,
+			int32(d.Width),
+			int32(d.Height),
+			format,
+			componentType,
+			gl.Ptr(data))
+
+		if d.Mipmaps {
+			gl.GenerateMipmap(target)
+		}
+	}
+
+	t := &Texture{texture, d}
 	runtime.SetFinalizer(t, textureCleanup)
 	return t
 }

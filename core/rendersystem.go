@@ -32,8 +32,11 @@ type RenderSystem interface {
 	// NewProgram creates a new program from a list of subprogram source files.
 	NewProgram(name string, data []byte) Program
 
-	// NewTexture creates a new texture from a byte buffer of image data
-	NewTexture(r []byte) Texture
+	// NewTexture creates a new texture from a byte buffer containing an image file, not raw bitmap.
+	// This always generates RGBA, unsigned byte, power of two and will generate mipmaps
+	// levels from smallest dimension, ie: 2048x1024 = 10 mipmap levels; log2(1024)
+	// It also defaults to ClampEdge and mipmapped filtering.
+	NewTextureFromImageData(r []byte, d TextureDescriptor) Texture
 
 	// NewUniform creates a new empty uniform
 	NewUniform() Uniform
@@ -41,12 +44,12 @@ type RenderSystem interface {
 	// NewUniformBuffer creates a new empty uniform buffer
 	NewUniformBuffer() UniformBuffer
 
-	// NewRawTexture creates an unverified/unvalidated texture from a width, height and byte buffer.
-	NewRawTexture(width, height int, payload []byte) Texture
+	// NewRawTexture creates a new texture and allocates storage for it
+	NewTexture(descriptor TextureDescriptor, data []byte) Texture
 
 	// NewRenderTarget returns a render target of width, height, depth layer count and color layer count.
 	// These are implementation specific but will generally be framebuffer attachments.
-	NewRenderTarget(width uint32, height uint32, depthLayers uint8, layers uint8) RenderTarget
+	NewRenderTarget(width uint32, height uint32, depth bool, layers uint8) RenderTarget
 
 	// ExecuteRenderPlan issues the actual drawing commands to the 3D api
 	ExecuteRenderPlan(p RenderPlan)

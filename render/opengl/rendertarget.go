@@ -2,7 +2,6 @@ package opengl
 
 import (
 	"github.com/fcvarela/gosg/core"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/golang/glog"
 )
@@ -12,62 +11,61 @@ type RenderTarget struct {
 	width         uint32
 	height        uint32
 	fbo           uint32
-	depthLayers   uint8
-	depthTexture  uint32
-	colorTextures []uint32
+	depthTexture  core.Texture
+	colorTextures []core.Texture
 }
 
 // NewRenderTarget implements the core.RenderSystem interface
-func (r *RenderSystem) NewRenderTarget(width uint32, height uint32, depthLayers uint8, layers uint8) core.RenderTarget {
-	rt := &RenderTarget{width, height, 0, depthLayers, 0, make([]uint32, layers)}
+// fixme: this should be explicitly attached later (depth, color attachments)
+func (r *RenderSystem) NewRenderTarget(width uint32, height uint32, depth bool, layers uint8) core.RenderTarget {
+	rt := &RenderTarget{width, height, 0, nil, nil}
 
 	// create the FB & bind it
 	gl.GenFramebuffers(1, &rt.fbo)
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rt.fbo)
 
 	// create texture handle
-	if depthLayers == 1 {
-		gl.GenTextures(1, &rt.depthTexture)
-		gl.BindTexture(gl.TEXTURE_2D, rt.depthTexture)
-		gl.TexImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT32F, int32(rt.width), int32(rt.height), 0, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
-		gl.FramebufferTexture2D(gl.DRAW_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, rt.depthTexture, 0)
-
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	} else if depthLayers > 1 {
-		gl.GenTextures(1, &rt.depthTexture)
-		gl.BindTexture(gl.TEXTURE_2D_ARRAY, rt.depthTexture)
-
-		gl.TexImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.DEPTH_COMPONENT32F, int32(width), int32(height), int32(depthLayers), gl.FALSE, gl.DEPTH_COMPONENT, gl.FLOAT, nil)
-
-		for i := 0; i < int(depthLayers); i++ {
-			gl.FramebufferTextureLayer(gl.DRAW_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, rt.depthTexture, 0, int32(i))
+	if depth {
+		depthTextureDescriptor := core.TextureDescriptor{
+			Width:         rt.width,
+			Height:        rt.height,
+			Mipmaps:       false,
+			Target:        core.TextureTarget2D,
+			Format:        core.TextureFormatDEPTH,
+			SizedFormat:   core.TextureSizedFormatDEPTH32F,
+			ComponentType: core.TextureComponentTypeFLOAT,
+			Filter:        core.TextureFilterNearest,
+			WrapMode:      core.TextureWrapModeClampEdge,
 		}
+		rt.depthTexture = r.NewTexture(depthTextureDescriptor, nil)
 
-		gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-		gl.TexParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_COMPARE_MODE, gl.NONE)
+		// fixme: do we need this bind?
+		gl.BindTexture(gl.TEXTURE_2D, rt.depthTexture.(*Texture).id)
+		gl.FramebufferTexture(gl.DRAW_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, rt.depthTexture.(*Texture).id, 0)
 	}
 
 	if layers > 0 {
 		// prealloc drawbuffer holder
+		rt.colorTextures = make([]core.Texture, layers)
 		drawBuffers := make([]uint32, layers)
 
-		for i := 0; i < int(layers); i++ {
-			gl.GenTextures(1, &rt.colorTextures[i])
-			gl.BindTexture(gl.TEXTURE_2D, rt.colorTextures[i])
-			gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGB32F, int32(rt.width), int32(rt.height), 0, gl.RGB, gl.FLOAT, nil)
-			gl.FramebufferTexture2D(gl.DRAW_FRAMEBUFFER, uint32(gl.COLOR_ATTACHMENT0+i), gl.TEXTURE_2D, rt.colorTextures[i], 0)
+		for i := range rt.colorTextures {
+			textureDescriptor := core.TextureDescriptor{
+				Width:         rt.width,
+				Height:        rt.height,
+				Mipmaps:       false,
+				Target:        core.TextureTarget2D,
+				Format:        core.TextureFormatRGB,
+				SizedFormat:   core.TextureSizedFormatRGBA32F,
+				ComponentType: core.TextureComponentTypeFLOAT,
+				Filter:        core.TextureFilterLinear,
+				WrapMode:      core.TextureWrapModeClampEdge,
+			}
+			rt.colorTextures[i] = r.NewTexture(textureDescriptor, nil)
 			drawBuffers[i] = uint32(gl.COLOR_ATTACHMENT0 + i)
 
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-			gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+			gl.BindTexture(gl.TEXTURE_2D, rt.colorTextures[i].(*Texture).id)
+			gl.FramebufferTexture(gl.DRAW_FRAMEBUFFER, uint32(gl.COLOR_ATTACHMENT0+i), rt.colorTextures[i].(*Texture).id, 0)
 		}
 
 		// call drawbuffers
@@ -97,18 +95,6 @@ func (r *RenderSystem) NewRenderTarget(width uint32, height uint32, depthLayers 
 	return rt
 }
 
-// SetActiveDepthLayer implements the core.RenderTarger interface
-func (rt *RenderTarget) SetActiveDepthLayer(l uint8) {
-	gl.BindFramebuffer(gl.FRAMEBUFFER, rt.fbo)
-	gl.FramebufferTextureLayer(gl.DRAW_FRAMEBUFFER, gl.DEPTH_ATTACHMENT, rt.depthTexture, 0, int32(l))
-	gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
-}
-
-// DepthLayerCount implements the core.RenderTarger interface
-func (rt *RenderTarget) DepthLayerCount() uint8 {
-	return rt.depthLayers
-}
-
 // ColorTextureCount implements the core.RenderTarger interface
 func (rt *RenderTarget) ColorTextureCount() uint8 {
 	return uint8(len(rt.colorTextures))
@@ -116,16 +102,15 @@ func (rt *RenderTarget) ColorTextureCount() uint8 {
 
 // DepthTexture implements the core.RenderTarger interface
 func (rt *RenderTarget) DepthTexture() core.Texture {
-	return &Texture{rt.depthTexture}
+	return rt.depthTexture
 }
 
 // ColorTexture implements the core.RenderTarger interface
 func (rt *RenderTarget) ColorTexture(idx uint8) core.Texture {
 	if int(idx) < len(rt.colorTextures) {
-		return &Texture{rt.colorTextures[idx]}
+		return rt.colorTextures[idx]
 	}
-
-	return &Texture{0}
+	return nil
 }
 
 func (rt *RenderTarget) bind() {
