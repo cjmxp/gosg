@@ -58,7 +58,7 @@ type Camera struct {
 	clipDistance       mgl64.Vec2
 	dirty              bool
 	renderOrder        uint8
-	renderTarget       RenderTarget
+	renderTarget       Framebuffer
 	frustum            [6]mgl64.Vec4
 	cascadingAABBS     [maxCascades]*AABB
 	cascadingZCuts     [maxCascades]float64
@@ -301,12 +301,12 @@ func (c *Camera) SetClearMode(cm RenderTargetClearMode) {
 }
 
 // RenderTarget returns the camera's render target.
-func (c *Camera) RenderTarget() RenderTarget {
+func (c *Camera) RenderTarget() Framebuffer {
 	return c.renderTarget
 }
 
 // SetRenderTarget sets the camera's render target.
-func (c *Camera) SetRenderTarget(rt RenderTarget) {
+func (c *Camera) SetRenderTarget(rt Framebuffer) {
 	c.renderTarget = rt
 }
 

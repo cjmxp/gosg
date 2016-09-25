@@ -47,9 +47,8 @@ type RenderSystem interface {
 	// NewRawTexture creates a new texture and allocates storage for it
 	NewTexture(descriptor TextureDescriptor, data []byte) Texture
 
-	// NewRenderTarget returns a render target of width, height, depth layer count and color layer count.
-	// These are implementation specific but will generally be framebuffer attachments.
-	NewRenderTarget(width uint32, height uint32, depth bool, layers uint8) RenderTarget
+	// NewFramebuffer returns a newly created framebuffer
+	NewFramebuffer(width uint32, height uint32, depth bool, layers uint8) Framebuffer
 
 	// ExecuteRenderPlan issues the actual drawing commands to the 3D api
 	ExecuteRenderPlan(p RenderPlan)

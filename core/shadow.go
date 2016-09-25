@@ -1,9 +1,8 @@
 package core
 
 import (
-	"math"
-
 	"fmt"
+	"math"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
@@ -34,7 +33,7 @@ const (
 func NewShadowMap(size uint16) *ShadowMap {
 	shadowMap := &ShadowMap{size, make([]*Camera, numCascades), make([]Texture, numCascades)}
 	for i := 0; i < numCascades; i++ {
-		rt := renderSystem.NewRenderTarget(uint32(size), uint32(size), false, 1)
+		rt := renderSystem.NewFramebuffer(uint32(size), uint32(size), false, 1)
 		c := NewCamera("ShadowCamera", OrthographicProjection)
 		c.SetRenderTarget(rt)
 		c.SetViewport(mgl32.Vec4{0.0, 0.0, float32(size), float32(size)})

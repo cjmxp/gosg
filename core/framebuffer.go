@@ -1,8 +1,8 @@
 package core
 
-// RenderTarget is an interface which wraps a render target. This contains
-// information about framebuffers and their attachments.
-type RenderTarget interface {
+// Framebuffer is an interface which wraps a render target. This contains
+// information about depth and color attachments, dimensions.
+type Framebuffer interface {
 	// ColorTextureCount returns the number of color attachment textures.
 	ColorTextureCount() uint8
 

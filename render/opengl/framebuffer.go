@@ -6,8 +6,8 @@ import (
 	"github.com/golang/glog"
 )
 
-// RenderTarget implements the core.RenderTarget interface
-type RenderTarget struct {
+// Framebuffer implements the core.Framebuffer interface
+type Framebuffer struct {
 	width         uint32
 	height        uint32
 	fbo           uint32
@@ -15,10 +15,10 @@ type RenderTarget struct {
 	colorTextures []core.Texture
 }
 
-// NewRenderTarget implements the core.RenderSystem interface
+// NewFramebuffer implements the core.RenderSystem interface
 // fixme: this should be explicitly attached later (depth, color attachments)
-func (r *RenderSystem) NewRenderTarget(width uint32, height uint32, depth bool, layers uint8) core.RenderTarget {
-	rt := &RenderTarget{width, height, 0, nil, nil}
+func (r *RenderSystem) NewFramebuffer(width uint32, height uint32, depth bool, layers uint8) core.Framebuffer {
+	rt := &Framebuffer{width, height, 0, nil, nil}
 
 	// create the FB & bind it
 	gl.GenFramebuffers(1, &rt.fbo)
@@ -96,23 +96,23 @@ func (r *RenderSystem) NewRenderTarget(width uint32, height uint32, depth bool, 
 }
 
 // ColorTextureCount implements the core.RenderTarger interface
-func (rt *RenderTarget) ColorTextureCount() uint8 {
+func (rt *Framebuffer) ColorTextureCount() uint8 {
 	return uint8(len(rt.colorTextures))
 }
 
 // DepthTexture implements the core.RenderTarger interface
-func (rt *RenderTarget) DepthTexture() core.Texture {
+func (rt *Framebuffer) DepthTexture() core.Texture {
 	return rt.depthTexture
 }
 
 // ColorTexture implements the core.RenderTarger interface
-func (rt *RenderTarget) ColorTexture(idx uint8) core.Texture {
+func (rt *Framebuffer) ColorTexture(idx uint8) core.Texture {
 	if int(idx) < len(rt.colorTextures) {
 		return rt.colorTextures[idx]
 	}
 	return nil
 }
 
-func (rt *RenderTarget) bind() {
+func (rt *Framebuffer) bind() {
 	gl.BindFramebuffer(gl.FRAMEBUFFER, rt.fbo)
 }

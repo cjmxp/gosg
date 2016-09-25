@@ -49,7 +49,7 @@ func (r *RenderSystem) Stop() {
 func (r *RenderSystem) prepareRenderTarget(c *core.Camera) {
 	// bind specific render target
 	if c.RenderTarget() != nil {
-		c.RenderTarget().(*RenderTarget).bind()
+		c.RenderTarget().(*Framebuffer).bind()
 	} else {
 		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
 	}
