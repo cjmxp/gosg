@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/golang/glog"
 )
 
 // Shadower is an interface which wraps logic to implement shadowing of a light
@@ -19,7 +20,7 @@ type Shadower interface {
 
 // ShadowMap is a utility implementation of the Shadower interface which renders shadows by using a cascading shadow map.
 type ShadowMap struct {
-	size     uint16
+	size     uint32
 	cameras  []*Camera
 	textures []Texture
 }
@@ -30,17 +31,37 @@ const (
 )
 
 // NewShadowMap returns a new ShadowMap
-func NewShadowMap(size uint16) *ShadowMap {
+func NewShadowMap(size uint32) *ShadowMap {
 	shadowMap := &ShadowMap{size, make([]*Camera, numCascades), make([]Texture, numCascades)}
 	for i := 0; i < numCascades; i++ {
-		rt := renderSystem.NewFramebuffer(uint32(size), uint32(size), false, 1)
+		// create a framebuffer for the cascade
+		glog.Info("Shadow creating framebuffer")
+		framebuffer := renderSystem.NewFramebuffer(size, size, false, 1)
+
+		// create a texture to write to
+		texture := renderSystem.NewTexture(TextureDescriptor{
+			Width:         size,
+			Height:        size,
+			Mipmaps:       false,
+			Target:        TextureTarget2D,
+			Format:        TextureFormatRG,
+			SizedFormat:   TextureSizedFormatRG32F,
+			ComponentType: TextureComponentTypeFLOAT,
+			Filter:        TextureFilterLinear,
+			WrapMode:      TextureWrapModeRepeat,
+		}, nil)
+
+		// set it as the framebuffer color attachment
+		framebuffer.SetColorAttachment(0, texture)
+
+		// create a camera and set its framebuffer
 		c := NewCamera("ShadowCamera", OrthographicProjection)
-		c.SetRenderTarget(rt)
+		c.SetRenderTarget(framebuffer)
 		c.SetViewport(mgl32.Vec4{0.0, 0.0, float32(size), float32(size)})
 		c.SetAutoReshape(false)
 		c.SetRenderTechnique(nil)
 		shadowMap.cameras[i] = c
-		shadowMap.textures[i] = rt.ColorTexture(0)
+		shadowMap.textures[i] = framebuffer.ColorAttachment(0)
 	}
 	return shadowMap
 }

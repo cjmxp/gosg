@@ -49,9 +49,9 @@ func (r *RenderSystem) Stop() {
 func (r *RenderSystem) prepareRenderTarget(c *core.Camera) {
 	// bind specific render target
 	if c.RenderTarget() != nil {
-		c.RenderTarget().(*Framebuffer).bind()
+		bindFramebuffer(c.RenderTarget().(*Framebuffer).fbo)
 	} else {
-		gl.BindFramebuffer(gl.FRAMEBUFFER, 0)
+		bindFramebuffer(0)
 	}
 
 	// reset viewport
