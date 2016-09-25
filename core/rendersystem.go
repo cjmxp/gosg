@@ -48,7 +48,7 @@ type RenderSystem interface {
 	NewTexture(descriptor TextureDescriptor, data []byte) Texture
 
 	// NewFramebuffer returns a newly created framebuffer
-	NewFramebuffer(width uint32, height uint32, depth bool, layers uint8) Framebuffer
+	NewFramebuffer() Framebuffer
 
 	// ExecuteRenderPlan issues the actual drawing commands to the 3D api
 	ExecuteRenderPlan(p RenderPlan)

@@ -36,7 +36,7 @@ func NewShadowMap(size uint32) *ShadowMap {
 	for i := 0; i < numCascades; i++ {
 		// create a framebuffer for the cascade
 		glog.Info("Shadow creating framebuffer")
-		framebuffer := renderSystem.NewFramebuffer(size, size, false, 1)
+		framebuffer := renderSystem.NewFramebuffer()
 
 		// create a texture to write to
 		texture := renderSystem.NewTexture(TextureDescriptor{

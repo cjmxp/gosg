@@ -18,7 +18,7 @@ var (
 )
 
 // NewFramebuffer implements the core.RenderSystem interface
-func (r *RenderSystem) NewFramebuffer(width uint32, height uint32, depth bool, layers uint8) core.Framebuffer {
+func (r *RenderSystem) NewFramebuffer() core.Framebuffer {
 	f := &Framebuffer{0, nil, make(map[int]core.Texture)}
 	gl.GenFramebuffers(1, &f.fbo)
 	return f
